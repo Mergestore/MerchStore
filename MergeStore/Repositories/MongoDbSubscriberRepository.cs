@@ -1,104 +1,68 @@
 using MergeStore.Models;
 using MongoDB.Driver;
 
-namespace MergeStore.Repositories;
-
-public class MongoDbSubscriberRepository : ISubscriberRepository
+namespace MergeStore.Repositories
 {
-    private readonly IMongoCollection<CustomerCartInfo> _subscribers;
-
-    public MongoDbSubscriberRepository(IMongoCollection<CustomerCartInfo> subscribers)
+    public class MongoDbProductRepository : IProductRepository
     {
-        _subscribers = subscribers;
-    }
+        private readonly IMongoCollection<Product> _products;
 
-    public async Task<IEnumerable<CustomerCartInfo>> GetAllAsync()
-    {
-        return await _subscribers.Find(_ => true).ToListAsync();
-    }
-
-    public async Task<CustomerCartInfo?> GetByEmailAsync(string email)
-    {
-        if (string.IsNullOrEmpty(email))
+        public MongoDbProductRepository(IMongoCollection<Product> products)
         {
-            return null;
+            _products = products;
         }
 
-        return await _subscribers.Find(s => s.Email == email).FirstOrDefaultAsync();
-    }
-
-    public async Task<bool> AddAsync(CustomerCartInfo subscriber)
-    {
-        if (subscriber == null || string.IsNullOrEmpty(subscriber.Email))
+        public async Task<IEnumerable<Product>> GetAllAsync()
         {
-            return false;
+            return await _products.Find(p => p.IsActive).ToListAsync();
         }
 
-        // Check if subscriber with this email already exists
-        var existingSubscriber = await GetByEmailAsync(subscriber.Email);
-        if (existingSubscriber != null)
+        public async Task<Product?> GetByIdAsync(string id)
         {
-            return false;
+            return await _products.Find(p => p.Id == id).FirstOrDefaultAsync();
         }
 
-        try
+        public async Task<bool> AddAsync(Product product)
         {
-            await _subscribers.InsertOneAsync(subscriber);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    public async Task<bool> UpdateAsync(CustomerCartInfo subscriber)
-    {
-        if (subscriber == null || string.IsNullOrEmpty(subscriber.Email))
-        {
-            return false;
+            try
+            {
+                await _products.InsertOneAsync(product);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        try
+        public async Task<bool> UpdateAsync(Product product)
         {
-            var result = await _subscribers.ReplaceOneAsync(
-                s => s.Email == subscriber.Email,
-                subscriber,
-                new ReplaceOptions { IsUpsert = false });
+            try
+            {
+                var result = await _products.ReplaceOneAsync(
+                    p => p.Id == product.Id,
+                    product,
+                    new ReplaceOptions { IsUpsert = false });
 
-            return result.ModifiedCount > 0;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    public async Task<bool> DeleteAsync(string email)
-    {
-        if (string.IsNullOrEmpty(email))
-        {
-            return false;
+                return result.ModifiedCount > 0;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        try
+        public async Task<bool> DeleteAsync(string id)
         {
-            var result = await _subscribers.DeleteOneAsync(s => s.Email == email);
-            return result.DeletedCount > 0;
+            try
+            {
+                var result = await _products.DeleteOneAsync(p => p.Id == id);
+                return result.DeletedCount > 0;
+            }
+            catch
+            {
+                return false;
+            }
         }
-        catch
-        {
-            return false;
-        }
-    }
-
-    public async Task<bool> ExistsAsync(string email)
-    {
-        if (string.IsNullOrEmpty(email))
-        {
-            return false;
-        }
-
-        return await _subscribers.CountDocumentsAsync(s => s.Email == email) > 0;
     }
 }
