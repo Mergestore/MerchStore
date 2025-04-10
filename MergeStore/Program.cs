@@ -3,19 +3,17 @@ using MergeStore.Repositories;
 using MergeStore.Services;
 using MergeStore.Storage;
 using MongoDB.Driver;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Konfigurera MongoDB Options
-builder.Services.Configure<MongoDbOptions>(
-    builder.Configuration.GetSection(MongoDbOptions.SectionName));
-
-// Konfigurera Azure Blob Options
-builder.Services.Configure<AzureBlobOptions>(
-    builder.Configuration.GetSection(AzureBlobOptions.SectionName));
+// Set Swedish culture as default
+var swedishCulture = new CultureInfo("sv-SE");
+CultureInfo.DefaultThreadCurrentCulture = swedishCulture;
+CultureInfo.DefaultThreadCurrentUICulture = swedishCulture;
 
 // Registrera IHttpContextAccessor för att få tillgång till HttpContext i tjänster
 builder.Services.AddHttpContextAccessor();
@@ -30,29 +28,8 @@ else
     builder.Services.AddSingleton<IImageService, AzureBlobImageService>();
 }
 
-// Konfigurera MongoDB
-var mongoDbOptions = builder.Configuration
-    .GetSection(MongoDbOptions.SectionName)
-    .Get<MongoDbOptions>();
-
-if (mongoDbOptions != null)
-{
-    var mongoClient = new MongoClient(mongoDbOptions.ConnectionString);
-    var database = mongoClient.GetDatabase(mongoDbOptions.DatabaseName);
-var subscribersCollection = database.GetCollection<MergeStore.Models.CustomerCartInfo>(
-    mongoDbOptions.SubscribersCollectionName);
-    
-    builder.Services.AddSingleton(subscribersCollection);
-    builder.Services.AddSingleton<ISubscriberRepository, MongoDbSubscriberRepository>();
-}
-else
-{
-    // Fallback to in-memory repository if MongoDB is not configured
-    builder.Services.AddSingleton<ISubscriberRepository, InMemorySubscriberRepository>();
-}
-
-// Registrera nyhetsbrevstjänst
-builder.Services.AddScoped<INewsletterService, NewsletterService>();
+// Använd endast in-memory repositories för enkel testning
+builder.Services.AddSingleton<IProductRepository, InMemoryProductRepository>();
 
 var app = builder.Build();
 
