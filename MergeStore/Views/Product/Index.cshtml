@@ -1,10 +1,12 @@
 @model IEnumerable<MergeStore.Models.Product>
+@using System.Globalization
 @{
     ViewData["Title"] = "Produkter";
 }
 
 <h1>Våra produkter</h1>
 
+// standard Bootstrap grid system
 <div class="row">
     @foreach (var product in Model)
     {
@@ -12,7 +14,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">@product.Name</h5>
-                    <p>@product.Price.ToString("C")</p>
+                    <p>@product.Price.ToString("C", new CultureInfo("sv-SE"))</p>
                     
                     <form asp-controller="Product" asp-action="AddToCart" method="post">
                         <input type="hidden" name="productId" value="@product.Id" />
