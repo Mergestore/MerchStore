@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# Definiera söksträngen och ersättningssträngen
+SEARCH="Pear"
+REPLACE="MerchStore"
+
+# Rekursivt sök igenom alla filer i katalogen och underkataloger
+echo "Söker efter filer som innehåller '$SEARCH'..."
+
+# Använd grep för att hitta alla filer som innehåller söksträngen
+FILES=$(grep -l -r "$SEARCH" --include="*.cs" --include="*.cshtml" --include="*.razor" --include="*.json" --include="*.html" --include="*.js" --include="*.css" .)
+
+# Om inga filer hittades
+if [ -z "$FILES" ]; then
+    echo "Inga filer innehåller '$SEARCH'."
+    exit 0
+fi
+
+# Räkna antal filer som kommer att uppdateras
+FILE_COUNT=$(echo "$FILES" | wc -l)
+echo "Hittade $FILE_COUNT filer som innehåller '$SEARCH'."
+echo "Vill du fortsätta och ersätta alla förekomster av '$SEARCH' med '$REPLACE'? (y/n)"
+
+read -r CONFIRM
+
+if [ "$CONFIRM" != "y" ]; then
+    echo "Avbryter operationen."
+    exit 0
+fi
+
+# För varje fil, ersätt strängen
+for FILE in $FILES; do
+    # Skapa en backup av filen först
+    cp "$FILE" "$FILE.bak"
+    
+    # Räkna förekomster av söksträngen i filen
+    COUNT=$(grep -o "$SEARCH" "$FILE" | wc -l)
+    
+    # Gör ersättningen med sed
+    sed -i "s/$SEARCH/$REPLACE/g" "$FILE"
+    
+    echo "Uppdaterade $FILE: ersatte $COUNT förekomster av '$SEARCH' med '$REPLACE'."
+done
+
+echo "Klar! Alla ersättningar genomförda."
+echo "Backup-filer (.bak) har skapats för alla ändrade filer."
