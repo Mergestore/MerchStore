@@ -1,0 +1,307 @@
+# MerchStore Infrastructure Testing Notebook
+
+This notebook demonstrates how to manually test the MerchStore Infrastructure layer components,
+particularly the Product repository implementation with Entity Framework Core.
+
+We'll test basic CRUD operations against an in-memory database to verify the repository works as expected.
+
+```cs
+#r "../MerchStore.Infrastructure/bin/Debug/net9.0/MerchStore.Infrastructure.dll"
+#r "../MerchStore.Infrastructure/bin/Debug/net9.0/MerchStore.Application.dll"
+#r "../MerchStore.Infrastructure/bin/Debug/net9.0/MerchStore.Domain.dll"
+
+#r "nuget: Microsoft.EntityFrameworkCore.InMemory, 9.0.0-preview.2.24128.4"
+#r "nuget: Microsoft.EntityFrameworkCore, 9.0.0-preview.2.24128.4"
+#r "nuget: Microsoft.EntityFrameworkCore.Relational, 9.0.0-preview.2.24128.4"
+
+#r "nuget: Microsoft.Extensions.Logging.Console"
+```
+
+## Setting Up the Environment
+
+Above, we're referencing our project assemblies and necessary NuGet packages. This allows us to:
+- Use our domain entities (Product, Money)
+- Access our infrastructure implementations (repositories, DbContext)
+- Use Entity Framework Core with an in-memory database
+- Configure logging for better visibility
+
+The `#r` directive is used to reference assemblies, while the `#r "nuget:"` syntax is used to
+reference packages directly from NuGet.
+
+## Creating the DbContext and Repository
+
+In a normal application, the DbContext and repositories are created and managed by the
+dependency injection container. For our interactive testing, we need to create these
+manually with the appropriate configuration.
+
+We'll use EF Core's in-memory database provider for testing, which doesn't require a
+real database server. This is perfect for testing repository functionality.
+```cs
+using Microsoft.EntityFrameworkCore;
+using MerchStore.Domain.Entities;
+using MerchStore.Domain.ValueObjects;
+using MerchStore.Infrastructure.Persistence;
+using MerchStore.Infrastructure.Persistence.Repositories;
+
+// Create options for an in-memory database
+var options = new DbContextOptionsBuilder<AppDbContext>()
+    .UseInMemoryDatabase("InMemTestDb")
+    .Options;
+
+// Create the context and repository
+var context = new AppDbContext(options);
+var repository = new ProductRepository(context);
+
+// Display confirmation
+Console.WriteLine("DbContext and ProductRepository created successfully");
+```
+
+```cs
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
+
+// Create a logger factory and logger
+var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+var logger = loggerFactory.CreateLogger<AppDbContextSeeder>();
+
+// Create the seeder
+var seeder = new AppDbContextSeeder(context, logger);
+
+// Seed the database
+await seeder.SeedAsync();
+
+Console.WriteLine("Database seeded successfully");
+```
+
+## Reading Products
+
+Let's test querying products from the database using our repository. We'll:
+1. Use GetAllAsync to retrieve all products
+2. Count and display the total number of products
+3. Show details of each product to verify they were retrieved correctly
+
+```cs
+// Get all products
+var products = await repository.GetAllAsync();
+
+// Display the count
+Console.WriteLine($"Total products: {products.Count()}");
+
+// Display product details in a table
+var productTable = products.Select(p => new {
+    Id = p.Id,
+    Name = p.Name,
+    Price = p.Price.ToString(),
+    Stock = p.StockQuantity,
+    ImageUrl = p.ImageUrl?.ToString() ?? "No image"
+}).ToList();
+
+// Display as a formatted table
+display(productTable);
+```
+
+```cs
+// Get the first product's ID
+var firstProductId = (await repository.GetAllAsync()).First().Id;
+
+// Get a specific product by ID
+var specificProduct = await repository.GetByIdAsync(firstProductId);
+
+// Display the result
+if (specificProduct != null)
+{
+    Console.WriteLine($"Found product: {specificProduct.Name}");
+    Console.WriteLine($"Price: {specificProduct.Price}");
+    Console.WriteLine($"Description: {specificProduct.Description}");
+}
+else
+{
+    Console.WriteLine($"Product with ID {firstProductId} not found!");
+}
+```
+
+
+## Creating a New Product
+
+Let's test adding a new product using our repository. This will:
+1. Create a new Product entity with valid data
+2. Call the repository's AddAsync method to add it to the context
+3. Call SaveChangesAsync to persist the changes to the database
+4. Display the new product's ID as confirmation
+
+```cs
+// Create a new product
+var product = new Product(
+    "Testing Notebook",
+    "A product created from the Polyglot Notebook",
+    new Uri("https://example.com/notebook.jpg"),
+    Money.FromSEK(199.99m),
+    25);
+
+// Add it to the repository
+await repository.AddAsync(product);
+
+// Save changes to the database
+await context.SaveChangesAsync();
+
+// Display the result
+Console.WriteLine($"Added product with ID: {product.Id}");
+Console.WriteLine($"Name: {product.Name}");
+Console.WriteLine($"Price: {product.Price}");
+Console.WriteLine($"Stock: {product.StockQuantity}");
+```
+
+## Updating a Product
+
+Now let's test updating an existing product using our repository. We'll:
+1. Retrieve a product from the database
+2. Update some of its properties
+3. Call the repository's UpdateAsync method
+4. Save the changes
+5. Verify the update by retrieving the product again
+
+```cs
+// Get the first product
+var productToUpdate = (await repository.GetAllAsync()).First();
+
+// Display before update
+Console.WriteLine("BEFORE UPDATE:");
+Console.WriteLine($"Name: {productToUpdate.Name}");
+Console.WriteLine($"Price: {productToUpdate.Price}");
+Console.WriteLine($"Stock: {productToUpdate.StockQuantity}");
+
+// Update the product
+productToUpdate.UpdatePrice(Money.FromSEK(productToUpdate.Price.Amount + 50m));
+productToUpdate.UpdateStock(productToUpdate.StockQuantity + 10);
+
+// Call update method
+await repository.UpdateAsync(productToUpdate);
+
+// Save changes
+await context.SaveChangesAsync();
+
+// Retrieve the updated product
+var updatedProduct = await repository.GetByIdAsync(productToUpdate.Id);
+
+// Display after update
+Console.WriteLine("\nAFTER UPDATE:");
+Console.WriteLine($"Name: {updatedProduct!.Name}");
+Console.WriteLine($"Price: {updatedProduct.Price}");
+Console.WriteLine($"Stock: {updatedProduct.StockQuantity}");
+```
+
+## Deleting Products
+
+Finally, let's test deleting products using our repository. We'll:
+1. Get all products
+2. Delete them one by one
+3. Verify the deletion by counting the remaining products
+
+```cs
+// Get all products
+var productsToDelete = await repository.GetAllAsync();
+var initialCount = productsToDelete.Count();
+
+Console.WriteLine($"Initial product count: {initialCount}");
+
+// Delete products one by one
+foreach (var p in productsToDelete)
+{
+    await repository.RemoveAsync(p);
+    await context.SaveChangesAsync();
+    Console.WriteLine($"Deleted product: {p.Name} (ID: {p.Id})");
+}
+
+// Verify all products are deleted
+var remainingProducts = await repository.GetAllAsync();
+Console.WriteLine($"Remaining product count: {remainingProducts.Count()}");
+
+if (!remainingProducts.Any())
+{
+    Console.WriteLine("All products deleted successfully!");
+}
+```
+
+## Visual Repository Pattern Overview
+
+The following diagram shows how the components we've tested fit into the Clean Architecture:
+
+```mermaid
+#!mermaid
+
+flowchart TB
+    subgraph Domain
+        E[Product Entity]
+        I[IProductRepository]
+    end
+
+    subgraph Infrastructure
+        R[ProductRepository]
+        DB[(Database)]
+    end
+
+    subgraph Application
+        S[Service/Handler]
+    end
+
+    S --> I
+    I -.-> E
+    R --> E
+    R --> DB
+    R -.implements.-> I
+
+    style Domain fill:#f9f,stroke:#333,stroke-width:2px
+    style Infrastructure fill:#bbf,stroke:#333,stroke-width:2px
+    style Application fill:#bfb,stroke:#333,stroke-width:2px
+    ```
+
+    ```mermaid
+    #!mermaid
+
+flowchart TB
+    subgraph Domain
+        E[Product Entity]
+        I[IProductRepository]
+    end
+
+    subgraph Infrastructure
+        R[ProductRepository]
+        DB[(Database)]
+    end
+
+    subgraph Application
+        S[Service/Handler]
+    end
+
+    S --> I
+    I -.-> E
+    R --> E
+    R --> DB
+    R -.implements.-> I
+
+    style Domain fill:#f9f,stroke:#333,stroke-width:2px
+    style Infrastructure fill:#bbf,stroke:#333,stroke-width:2px
+    style Application fill:#bfb,stroke:#333,stroke-width:2px
+    ```
+
+## Summary
+
+In this notebook, we've successfully tested:
+
+1. **Setup**: Creating an in-memory database and repository
+2. **Create**: Adding new products to the database
+3. **Read**: Retrieving all products and specific products by ID
+4. **Update**: Modifying product properties and saving changes
+5. **Delete**: Removing products from the database
+
+This confirms that our infrastructure layer is working correctly and can perform all the necessary
+CRUD operations on the Product entity. The repository pattern provides a clean abstraction over
+the database operations, letting us work with domain entities directly.
+
+The interactive nature of this notebook makes it easy to explore the behavior of our infrastructure
+components without having to run the full application. This approach is valuable for:
+
+- Development-time testing and exploration
+- Demonstrating how components work to other team members
+- Debugging data access issues
+- Creating documentation with live code examples
