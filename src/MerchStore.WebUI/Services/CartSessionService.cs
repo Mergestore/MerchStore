@@ -1,5 +1,6 @@
 using MerchStore.WebUI.Models;
 using System.Text.Json;
+using MerchStore.WebUI.Models.Catalog;
 
 namespace MerchStore.WebUI.Services;
 

@@ -19,6 +19,14 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddDistributedMemoryCache(); // 🧠 Temporär "cache" där sessioner lagras
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // 🕒 Hur länge sessionen lever
+    options.Cookie.HttpOnly = true; // 🔒 Skydda mot klientscript
+    options.Cookie.IsEssential = true; // 💡 Behövs för GDPR/consent
+});
+
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CartSessionService>();
 
@@ -45,8 +53,9 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseRouting();
 app.UseSession();
+app.UseRouting();
+
 
 app.UseAuthorization();
 

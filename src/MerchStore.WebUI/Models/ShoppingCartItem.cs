@@ -1,4 +1,5 @@
-namespace MerchStore.WebUI.Models;
+namespace MerchStore.WebUI.Models.Catalog;
+
 
 public class ShoppingCartItem
 {
