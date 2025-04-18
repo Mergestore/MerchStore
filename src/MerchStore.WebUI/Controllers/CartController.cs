@@ -26,14 +26,14 @@ namespace MerchStore.WebUI.Controllers
 
         // Lägger till en produkt i kundvagnen (skickas från t.ex. en "Lägg till"-knapp)
         [HttpPost]
-        public IActionResult AddToCart(Guid id, string name, decimal price)
+        public IActionResult AddToCart(Guid id, string name, decimal price, int quantity)
         {
             var item = new ShoppingCartItem
             {
                 ProductId = id,
                 Name = name,
                 Price = price,
-                Quantity = 1
+                Quantity = quantity
             };
 
             _cartService.AddToCart(item);
