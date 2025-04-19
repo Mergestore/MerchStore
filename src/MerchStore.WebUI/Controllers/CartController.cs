@@ -38,7 +38,9 @@ namespace MerchStore.WebUI.Controllers
 
             _cartService.AddToCart(item);
 
-           // 🛒 Gå tillbaka till sidan användaren var på
+
+            TempData["SuccessMessage"] = $"{quantity} st av \"{name}\" lades till i kundvagnen.";
+            // 🛒 Gå tillbaka till sidan användaren var på
             return Redirect(Request.Headers["Referer"].ToString());
 
 
