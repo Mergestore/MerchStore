@@ -1,16 +1,41 @@
 using MerchStore.Application;
 using MerchStore.Infrastructure;
+using MerchStore.WebUI.Services;
+/*using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+*/
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddDistributedMemoryCache(); // 🧠 Temporär "cache" där sessioner lagras
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // 🕒 Hur länge sessionen lever
+    options.Cookie.HttpOnly = true; // 🔒 Skydda mot klientscript
+    options.Cookie.IsEssential = true; // 💡 Behövs för GDPR/consent
+});
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<CartSessionService>();
+
 // Add Application services - this includes Services, Interfaces, etc.
 builder.Services.AddApplication();
 
 // Add Infrastructure services - this includes DbContext, Repositories, etc.
 builder.Services.AddInfrastructure(builder.Configuration);
+
 
 var app = builder.Build();
 
@@ -28,7 +53,9 @@ else
 }
 
 app.UseHttpsRedirection();
+app.UseSession();
 app.UseRouting();
+
 
 app.UseAuthorization();
 
