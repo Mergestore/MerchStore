@@ -38,8 +38,12 @@ namespace MerchStore.WebUI.Controllers
 
             _cartService.AddToCart(item);
 
+           // 🛒 Gå tillbaka till sidan användaren var på
+            return Redirect(Request.Headers["Referer"].ToString());
+
+
             // Efter man lagt till så går man till kundvagnen
-            return RedirectToAction("Index");
+            //return RedirectToAction("Index");
         }
 
         // Tar bort en produkt från kundvagnen baserat på dess ID
