@@ -51,46 +51,78 @@ public class AppDbContextSeeder
     /// </summary>
     private async Task SeedProductsAsync()
     {
-        // Check if we already have products (to avoid duplicate seeding)
+        // Kontrollera om det redan finns produkter (för att undvika dubbletter)
         if (!await _context.Products.AnyAsync())
         {
             _logger.LogInformation("Seeding products...");
 
-            // Add sample products
+            // Lägg till dina produkter
             var products = new List<Product>
-            {
-                new Product(
-                    "Conference T-Shirt",
-                    "A comfortable cotton t-shirt with the conference logo.",
-                    // new Uri("https://example.com/images/tshirt.jpg"),
-                    new Uri("https://merchstore202503311226.blob.core.windows.net/images/tshirt.png"),
-                    Money.FromSEK(249.99m),
-                    50),
+        {
+            // Keps - 1 bild
+            new Product(
+                "Sportkeps",
+                "En snygg och bekväm sportkeps i svart med vår logotyp fram.",
+                new Uri("https://blobmerchstore2204.blob.core.windows.net/imagerepository/keps1.jpg"),
+                Money.FromSEK(249.99m),
+                75),
 
-                new Product(
-                    "Developer Mug",
-                    "A ceramic mug with a funny programming joke.",
-                    // new Uri("https://example.com/images/mug.jpg"),
-                    new Uri("https://merchstore202503311226.blob.core.windows.net/images/mug.png"),
-                    Money.FromSEK(149.50m),
-                    100),
+            // Proteinpulver - 1 bild
+            new Product(
+                "Proteinpulver",
+                "Högkvalitativt proteinpulver med vaniljsmak, 900g.",
+                new Uri("https://blobmerchstore2204.blob.core.windows.net/imagerepository/proteinpulver1.jpg"),
+                Money.FromSEK(349.99m),
+                30),
 
-                new Product(
-                    "Laptop Sticker Pack",
-                    "A set of 5 programming language stickers for your laptop.",
-                    // new Uri("https://example.com/images/stickers.jpg"),
-                    new Uri("https://merchstore202503311226.blob.core.windows.net/images/stickers.png"),
-                    Money.FromSEK(79.99m),
-                    200),
+            // Leggings - 2 bilder
+            new Product(
+                "Träningsleggings",
+                "Högmidjade träningsleggings i svart med perfekt passform och stretchmaterial.",
+                new Uri("https://blobmerchstore2204.blob.core.windows.net/imagerepository/leggins1.jpg"),
+                Money.FromSEK(599.99m),
+                40),
 
-                new Product(
-                    "Branded Hoodie",
-                    "A warm hoodie with the company logo, perfect for cold offices.",
-                    // new Uri("https://example.com/images/hoodie.jpg"),
-                    new Uri("https://merchstore202503311226.blob.core.windows.net/images/hoodie.png"),
-                    Money.FromSEK(499.99m),
-                    25)
-            };
+            // Svart hoodie dam - 1 bild
+            new Product(
+                "Hoodie Dam Svart",
+                "Mjuk och varm damhoodie i svart med logotyp på bröstet.",
+                new Uri("https://blobmerchstore2204.blob.core.windows.net/imagerepository/svarthoodiedam1.png"),
+                Money.FromSEK(599.99m),
+                25),
+
+            // Svart hoodie man - 1 bild
+            new Product(
+                "Hoodie Herr Svart",
+                "Bekväm herrhoodie i svart med dragkedja och logotyp på ryggen.",
+                new Uri("https://blobmerchstore2204.blob.core.windows.net/imagerepository/svarthoodieman1.jpeg"),
+                Money.FromSEK(599.99m),
+                25),
+
+            // Vit hoodie man - 1 bild
+            new Product(
+                "Hoodie Herr Vit",
+                "Stilren vit herrhoodie med logotyp på bröstet, perfekt för alla tillfällen.",
+                new Uri("https://blobmerchstore2204.blob.core.windows.net/imagerepository/vithoodieman1.jpeg"),
+                Money.FromSEK(599.99m),
+                25),
+
+            // Vit hoodie dam - 1 bild
+            new Product(
+                "Hoodie Dam Vit",
+                "Elegant vit damhoodie med logotyp, tillverkad av ekologisk bomull.",
+                new Uri("https://blobmerchstore2204.blob.core.windows.net/imagerepository/vithoodiedam1.png"),
+                Money.FromSEK(599.99m),
+                25),
+
+            // Vit Tshirt man - 3 bilder (måste hantera flera bilder)
+            new Product(
+                "T-shirt Herr Vit",
+                "Klassisk vit t-shirt för herr med rund halsringning och logotyp.",
+                new Uri("https://blobmerchstore2204.blob.core.windows.net/imagerepository/vittshirtman1.jpeg"),
+                Money.FromSEK(249.99m),
+                50)
+        };
 
             await _context.Products.AddRangeAsync(products);
             await _context.SaveChangesAsync();
@@ -101,5 +133,6 @@ public class AppDbContextSeeder
         {
             _logger.LogInformation("Database already contains products. Skipping product seed.");
         }
+
     }
 }
