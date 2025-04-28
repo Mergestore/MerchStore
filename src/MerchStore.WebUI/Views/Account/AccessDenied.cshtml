@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "Åtkomst nekad";
+}
+
+<div class="text-center mt-5">
+    <h1 class="display-4 text-danger">Åtkomst nekad</h1>
+    <p class="lead mt-3">Du har inte behörighet att se denna sida.</p>
+    <p>Vänligen kontakta administratören om du behöver hjälp eller <a asp-action="Logout">logga ut</a> och prova med ett annat konto.</p>
+    <div class="mt-4">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Gå till startsidan</a>
+    </div>
+</div>

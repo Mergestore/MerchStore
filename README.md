@@ -1,3 +1,4 @@
 # MergeStore
+Admin: Användarnamn: admin, Lösenord: admin123
 
-Hejsan hej eller nått
+Kund: Användarnamn: customer, Lösenord: customer123
