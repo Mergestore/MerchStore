@@ -1,6 +1,7 @@
+using MerchStore.Application.Services;
+using MerchStore.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using MerchStore.WebUI.Models.Api.Basic;
-using MerchStore.Application.Services.Interfaces;
 
 namespace MerchStore.WebUI.Controllers.Api.Products;
 

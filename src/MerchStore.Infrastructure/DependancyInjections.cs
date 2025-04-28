@@ -22,10 +22,18 @@ public static class DependencyInjection
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        
+// Registrera DbContext med SQL Server
+        services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlServer(
+                configuration.GetConnectionString("DefaultConnection"),
+                b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+        
+        
         // Register DbContext with in-memory database
         // In a real application, you'd use a real database
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseInMemoryDatabase("MerchStoreDb"));
+   //     services.AddDbContext<AppDbContext>(options =>
+     //       options.UseInMemoryDatabase("MerchStoreDb"));
 
         // Register repositories
         services.AddScoped<IProductRepository, ProductRepository>();

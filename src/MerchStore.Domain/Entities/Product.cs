@@ -81,7 +81,7 @@ public class Product : Entity<Guid>
         if (string.IsNullOrWhiteSpace(description))
             throw new ArgumentException("Description cannot be empty", nameof(description));
 
-        if (description.Length > 500)
+        if (description.Length > 500)   
             throw new ArgumentException("Description cannot exceed 500 characters", nameof(description));
 
         // Image URI validation
@@ -123,8 +123,7 @@ public class Product : Entity<Guid>
 
         StockQuantity = quantity;
     }
-
-
+    
     public bool DecrementStock(int quantity = 1)
     {
         if (quantity <= 0)
