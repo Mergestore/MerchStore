@@ -3,6 +3,8 @@ using MerchStore.Application;
 using MerchStore.Infrastructure;
 using MerchStore.Infrastructure.Persistence;
 using MerchStore.WebUI.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 // Skapa en WebApplicationBuilder som är startpunkten för att konfigurera applikationen
