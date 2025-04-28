@@ -92,5 +92,7 @@ public class CatalogController : Controller
             ViewBag.ErrorMessage = "An error occurred while loading the product. Please try again later.";
             return View("Error");
         }
+
+        
     }
 }

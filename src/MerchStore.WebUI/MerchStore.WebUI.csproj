@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\MerchStore.Infrastructure\MerchStore.Infrastructure.csproj" />
@@ -16,6 +16,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
 
+    <UserSecretsId>5f14cfaf-dd28-401c-a081-057d2a6f48d2</UserSecretsId>
   </PropertyGroup>
 
 </Project>

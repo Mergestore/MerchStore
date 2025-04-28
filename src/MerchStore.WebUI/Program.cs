@@ -3,6 +3,8 @@ using MerchStore.Application;
 using MerchStore.Infrastructure;
 using MerchStore.WebUI.Services;
 using Microsoft.OpenApi.Models;
+//using MerchStore.Infrastructure.Persistence;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,6 +52,10 @@ builder.Services.AddSwaggerGen(options =>
         options.IncludeXmlComments(xmlPath);
     }
 });
+
+//builder.Services.AddInfrastructure(builder.Configuration);
+
+//builder.Configuration.AddUserSecrets<Program>();
 
 var app = builder.Build();
 
