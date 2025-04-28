@@ -16,18 +16,13 @@ public class CartSessionService
 
     public List<ShoppingCartItem> GetCart()
     {
-        var session = _httpContextAccessor.HttpContext?.Session;
-        var cartJson = session?.GetString(SessionKey);
+        var session = _httpContextAccessor.HttpContext?.Session; // Get the current session
+        var cartJson = session?.GetString(SessionKey); // Retrieve the cart JSON string from the session
         return cartJson != null
             ? JsonSerializer.Deserialize<List<ShoppingCartItem>>(cartJson) ?? new()
             : new List<ShoppingCartItem>();
     }
 
-    public void SaveCart(List<ShoppingCartItem> cart)
-    {
-        var session = _httpContextAccessor.HttpContext?.Session;
-        session?.SetString(SessionKey, JsonSerializer.Serialize(cart));
-    }
 
     public void AddToCart(ShoppingCartItem item)
     {
@@ -44,6 +39,12 @@ public class CartSessionService
         }
 
         SaveCart(cart);
+    }
+    
+    public void SaveCart(List<ShoppingCartItem> cart)
+    {
+        var session = _httpContextAccessor.HttpContext?.Session;
+        session?.SetString(SessionKey, JsonSerializer.Serialize(cart));
     }
 
     public void RemoveFromCart(Guid productId)

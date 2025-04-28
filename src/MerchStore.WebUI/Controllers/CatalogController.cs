@@ -1,5 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
+using MerchStore.Application.Services;
 using MerchStore.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 using MerchStore.WebUI.Models.Catalog;
 
 namespace MerchStore.WebUI.Controllers;
@@ -92,5 +93,7 @@ public class CatalogController : Controller
             ViewBag.ErrorMessage = "An error occurred while loading the product. Please try again later.";
             return View("Error");
         }
+
+        
     }
 }
