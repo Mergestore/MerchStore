@@ -8,8 +8,8 @@ using MerchStore.WebUI.Models.Catalog;
 
 namespace MerchStore.WebUI.Controllers
 {
-   // Kräver att användaren är inloggad för alla actions i denna controller
-    // [Authorize] kommenterad för att tillåta åtkomst utan inloggning under utveckling
+    // Kräver att användaren är inloggad för alla actions i denna controller
+    //[Authorize] lade en kommentar på denna för att kund ej ska behöva logga in för att kunna lägga till i kundvagnen
     public class CartController : Controller
     {
         private readonly CartSessionService _cartService;

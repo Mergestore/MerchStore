@@ -170,14 +170,10 @@ app.UseAuthentication();
 // Aktivera auktorisering (vad användaren får göra)
 app.UseAuthorization();
 
-// Konfigurera statiska filer (CSS, JavaScript, bilder)
-app.MapStaticAssets();
-
-// Konfigurera standardrouting för MVC-kontroller
+app.UseStaticFiles();
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // Starta applikationen
 app.Run();
