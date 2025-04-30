@@ -30,7 +30,6 @@ public static class DependencyInjection
                 configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
         
-        
         // Register DbContext with in-memory database
         // In a real application, you'd use a real database
    //     services.AddDbContext<AppDbContext>(options =>

@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  merchstore-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=merchstore-db;Database=MerchStoreDb;User=sa;Password=YourStrong@Password;TrustServerCertificate=True;
+    depends_on:
+      - merchstore-db
+
+  merchstore-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong@Password
+    ports:
+      - "1433:1433"
+    volumes:
+      - merchstore-data:/var/opt/mssql
+
+volumes:
+  merchstore-data:
