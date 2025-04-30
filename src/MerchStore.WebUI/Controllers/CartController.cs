@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MerchStore.WebUI.Models;
 using MerchStore.WebUI.Services;
@@ -7,6 +8,8 @@ using MerchStore.WebUI.Models.Catalog;
 
 namespace MerchStore.WebUI.Controllers
 {
+   // Kräver att användaren är inloggad för alla actions i denna controller
+    // [Authorize] kommenterad för att tillåta åtkomst utan inloggning under utveckling
     public class CartController : Controller
     {
         private readonly CartSessionService _cartService;
@@ -24,7 +27,7 @@ namespace MerchStore.WebUI.Controllers
             return View(cart); // Detta ska visa Cart/Index.cshtml
         }
 
-        // Lägger till en produkt i kundvagnen (skickas från t.ex. en "Lägg till"-knapp)
+        // Lägger till en produkt i kundvagnen (skickas från "Lägg till" knapp)
         [HttpPost]
         public IActionResult AddToCart(Guid id, string name, decimal price, int quantity)
         {
