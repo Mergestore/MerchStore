@@ -21,20 +21,22 @@ public static class DependencyInjection
     /// <param name="services">The service collection to add services to</param>
     /// <param name="configuration">The configuration for database connection strings</param>
     /// <returns>The service collection for chaining</returns>
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
-    {
-        
-// Registrera DbContext med SQL Server
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(
-                configuration.GetConnectionString("DefaultConnection"),
-                b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
-        
-        // Register DbContext with in-memory database
-        // In a real application, you'd use a real database
-   //     services.AddDbContext<AppDbContext>(options =>
-     //       options.UseInMemoryDatabase("MerchStoreDb"));
-
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        {
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+            {
+                // Använd InMemory-databas för lokal utveckling
+                services.AddDbContext<AppDbContext>(options =>
+                    options.UseInMemoryDatabase("MerchStoreDb"));
+            }
+            else
+            {
+                // Använd Azure SQL för produktion
+                services.AddDbContext<AppDbContext>(options =>
+                    options.UseSqlServer(
+                        configuration.GetConnectionString("DefaultConnection"),
+                        b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+            }
         // Register repositories
         services.AddScoped<IProductRepository, ProductRepository>();
 
