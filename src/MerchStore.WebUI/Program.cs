@@ -6,11 +6,29 @@ using MerchStore.WebUI.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using MerchStore.WebUI.Authentication.ApiKey;
+
+
 
 
 
 // Skapa en WebApplicationBuilder som är startpunkten för att konfigurera applikationen
 var builder = WebApplication.CreateBuilder(args);
+
+    // 🔐 Lägg till API-nyckel-autentisering
+    builder.Services.AddAuthentication()
+        .AddApiKey(builder.Configuration["ApiKey:Value"] 
+        ?? throw new InvalidOperationException("API Key is not configured in appsettings."));
+
+    // 🔐 Lägg till en policy som kräver att man är autentiserad via vår API-nyckel
+    builder.Services.AddAuthorization(options =>
+    {
+        options.AddPolicy("ApiKeyPolicy", policy =>
+            policy.AddAuthenticationSchemes(ApiKeyAuthenticationDefaults.AuthenticationScheme)
+                .RequireAuthenticatedUser());
+    });
+
+
 
 // Lägg till MVC-stöd med Controllers och Views
 builder.Services.AddControllersWithViews();
@@ -107,6 +125,21 @@ builder.Services.AddSwaggerGen(options =>
     {
         options.IncludeXmlComments(xmlPath);
     }
+    
+        // 🔐 Lägg till API-nyckel-stöd i Swagger
+    options.AddSecurityDefinition(ApiKeyAuthenticationDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+    {
+        Description = "Skriv in din API-nyckel här för att testa skyddade endpoints.",
+        Name = ApiKeyAuthenticationDefaults.HeaderName, // X-API-Key
+        In = ParameterLocation.Header, // Vi skickar nyckeln som en HTTP-header
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = ApiKeyAuthenticationDefaults.AuthenticationScheme
+    });
+
+    // 🔐 Applicera säkerhetsfilter för endpoints med [Authorize]
+    options.OperationFilter<MerchStore.WebUI.Infrastructure.SecurityRequirementsOperationFilter>();
+
+
 });
 
 // Program.cs - Lägg till loggning för anslutningssträngen
