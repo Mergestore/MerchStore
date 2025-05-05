@@ -7,7 +7,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using MerchStore.WebUI.Authentication.ApiKey;
-
+using MerchStore.WebUI.Infrastructure;
+using System.Text.Json.Serialization; // För Json-konvertering
 
 
 
@@ -27,6 +28,10 @@ var builder = WebApplication.CreateBuilder(args);
             policy.AddAuthenticationSchemes(ApiKeyAuthenticationDefaults.AuthenticationScheme)
                 .RequireAuthenticatedUser());
     });
+
+
+    
+
 
 
 
@@ -67,6 +72,18 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("CustomerOnly", policy => policy.RequireRole("Customer"));
 });
 
+// Detta registrerar en CORS-policy som tillåter alla domäner, headers och metoder
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowAllOrigins",
+            builder =>
+            {
+                builder.AllowAnyOrigin()  // Vem som helst får anropa (⚠️ i produktion: begränsa!)
+                    .AllowAnyHeader()  // Tillåt alla typer av headers
+                    .AllowAnyMethod(); // Tillåt GET, POST, PUT, DELETE etc
+            });
+    });
+
 // Lägg till minnescache för sessioner
 builder.Services.AddDistributedMemoryCache();
 
@@ -102,6 +119,15 @@ MerchStore.Infrastructure.DependencyInjection.AddInfrastructure(builder.Services
 // Konfigurera stöd för API-dokumentation
 builder.Services.AddEndpointsApiExplorer();
 
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = new JsonSnakeCaseNamingPolicy(); // för objekt
+        options.JsonSerializerOptions.DictionaryKeyPolicy = new JsonSnakeCaseNamingPolicy();   // för dictionaries
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());           // gör enum till string istället för siffror
+    });
+
+
 // Lägg till Swagger för API-dokumentation
 builder.Services.AddSwaggerGen(options =>
 {
@@ -117,6 +143,10 @@ builder.Services.AddSwaggerGen(options =>
             Email = "support@merchstore.example.com"
         }
     });
+
+    
+     
+
 
     // Inkludera XML-dokumentation från kodens XML-kommentarer
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -233,6 +263,9 @@ else
     });
 }
 
+
+app.UseCors("AllowAllOrigins");
+
 // Omdirigera HTTP-trafik till HTTPS
 app.UseHttpsRedirection();
 
@@ -241,6 +274,9 @@ app.UseSession();
 
 // Konfigurera routing
 app.UseRouting();
+
+app.UseCors("AllowAllOrigins");
+
 
 // Aktivera autentisering (vem användaren är)
 app.UseAuthentication();
