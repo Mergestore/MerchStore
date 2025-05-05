@@ -32,4 +32,6 @@ public class CatalogService : ICatalogService
     {
         return await _productRepository.GetByIdAsync(id);
     }
+    
+    
 }
