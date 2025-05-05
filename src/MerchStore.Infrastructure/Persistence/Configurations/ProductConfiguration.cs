@@ -47,6 +47,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             // Map Amount property to a column named Price
             priceBuilder.Property(m => m.Amount)
                 .HasColumnName("Price")
+                .HasColumnType("decimal(18,2)")  // Lägger till specificerad precision
                 .IsRequired();
 
             // Map Currency property to a column named Currency

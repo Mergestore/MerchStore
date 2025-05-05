@@ -1,5 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
+using MerchStore.Application.Services;
 using MerchStore.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 using MerchStore.WebUI.Models.Catalog;
 
 namespace MerchStore.WebUI.Controllers;
@@ -35,7 +36,7 @@ public class CatalogController : Controller
                 StockQuantity = p.StockQuantity
             }).ToList();
 
-            // Create the product catalog view model
+            // Skapa viewmodel
             var viewModel = new ProductCatalogViewModel
             {
                 FeaturedProducts = productViewModels
@@ -46,7 +47,6 @@ public class CatalogController : Controller
         catch (Exception ex)
         {
             // Log the exception
-            // In a real application, you should use a proper logging framework
             Console.WriteLine($"Error in ProductCatalog: {ex.Message}");
 
             // Show an error message to the user
@@ -92,5 +92,7 @@ public class CatalogController : Controller
             ViewBag.ErrorMessage = "An error occurred while loading the product. Please try again later.";
             return View("Error");
         }
+
+        
     }
 }
