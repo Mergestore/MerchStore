@@ -32,4 +32,7 @@ RUN dotnet publish "MerchStore.WebUI.csproj" -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+# Lägg till denna rad i din Dockerfile, innan ENTRYPOINT
+ENV ASPNETCORE_URLS=http://+:80
+ENV ConnectionStrings__DefaultConnection="Server=tcp:merchstore.database.windows.net,1433;Initial Catalog=merchstoredb;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;Authentication=\"Active Directory Default\";"
 ENTRYPOINT ["dotnet", "MerchStore.WebUI.dll"]

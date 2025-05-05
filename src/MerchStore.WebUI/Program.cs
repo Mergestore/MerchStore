@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
+
+
 // Skapa en WebApplicationBuilder som är startpunkten för att konfigurera applikationen
 var builder = WebApplication.CreateBuilder(args);
 
@@ -107,12 +109,55 @@ builder.Services.AddSwaggerGen(options =>
     }
 });
 
+// Program.cs - Lägg till loggning för anslutningssträngen
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+Console.WriteLine($"Använder anslutningssträng: {connectionString}");
+
 //builder.Services.AddInfrastructure(builder.Configuration);
 
 //builder.Configuration.AddUserSecrets<Program>();
 
 // Bygg applikationen med alla konfigurerade tjänster
 var app = builder.Build();
+
+// Konfigurera middleware för att hantera begärningar och svar
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogInformation("Förbereder databasinitiering...");
+        
+        var context = services.GetRequiredService<AppDbContext>();
+        
+        // Kontrollera anslutningen
+        var canConnect = await context.Database.CanConnectAsync();
+        logger.LogInformation($"Kan ansluta till databasen: {canConnect}");
+        
+        if (canConnect)
+        {
+            // Kör migrationer
+            logger.LogInformation("Applicerar migrationer...");
+            await context.Database.MigrateAsync();
+            
+            // Seeda databasen
+            logger.LogInformation("Startar seeding...");
+            var seeder = services.GetRequiredService<AppDbContextSeeder>();
+            await seeder.SeedAsync();
+            logger.LogInformation("Seeding slutförd");
+        }
+        else
+        {
+            logger.LogError("Kunde inte ansluta till databasen. Skipping migrations och seeding.");
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ett fel uppstod vid initiering av databasen.");
+    }
+}
 
 // Applicera migrationer automatiskt vid uppstart
 using (var scope = app.Services.CreateScope())
