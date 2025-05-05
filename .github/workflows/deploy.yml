@@ -62,7 +62,9 @@ jobs:
             --min-replicas 1 \
             --max-replicas 3 \
             --cpu 0.5 \
-            --memory 1.0
+            --memory 1.0 \
+            --ingress external \
+            --target-port 8080
 
       - name: Verify Deployment
         run: |
