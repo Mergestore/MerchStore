@@ -1,4 +1,4 @@
-/* using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 
 namespace MerchStore.WebUI.Authentication.ApiKey;
 
@@ -18,4 +18,3 @@ public class ApiKeyAuthenticationOptions : AuthenticationSchemeOptions
     /// </summary>
     public string ApiKey { get; set; } = string.Empty;
 }
-*/

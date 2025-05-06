@@ -6,11 +6,34 @@ using MerchStore.WebUI.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using MerchStore.WebUI.Authentication.ApiKey;
+using MerchStore.WebUI.Infrastructure;
+using System.Text.Json.Serialization; // För Json-konvertering
+
 
 
 
 // Skapa en WebApplicationBuilder som är startpunkten för att konfigurera applikationen
 var builder = WebApplication.CreateBuilder(args);
+
+    // 🔐 Lägg till API-nyckel-autentisering
+    builder.Services.AddAuthentication()
+        .AddApiKey(builder.Configuration["ApiKey:Value"] 
+        ?? throw new InvalidOperationException("API Key is not configured in appsettings."));
+
+    // 🔐 Lägg till en policy som kräver att man är autentiserad via vår API-nyckel
+    builder.Services.AddAuthorization(options =>
+    {
+        options.AddPolicy("ApiKeyPolicy", policy =>
+            policy.AddAuthenticationSchemes(ApiKeyAuthenticationDefaults.AuthenticationScheme)
+                .RequireAuthenticatedUser());
+    });
+
+
+    
+
+
+
 
 // Lägg till MVC-stöd med Controllers och Views
 builder.Services.AddControllersWithViews();
@@ -49,6 +72,18 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("CustomerOnly", policy => policy.RequireRole("Customer"));
 });
 
+// Detta registrerar en CORS-policy som tillåter alla domäner, headers och metoder
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowAllOrigins",
+            builder =>
+            {
+                builder.AllowAnyOrigin()  // Vem som helst får anropa (⚠️ i produktion: begränsa!)
+                    .AllowAnyHeader()  // Tillåt alla typer av headers
+                    .AllowAnyMethod(); // Tillåt GET, POST, PUT, DELETE etc
+            });
+    });
+
 // Lägg till minnescache för sessioner
 builder.Services.AddDistributedMemoryCache();
 
@@ -84,6 +119,15 @@ MerchStore.Infrastructure.DependencyInjection.AddInfrastructure(builder.Services
 // Konfigurera stöd för API-dokumentation
 builder.Services.AddEndpointsApiExplorer();
 
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = new JsonSnakeCaseNamingPolicy(); // för objekt
+        options.JsonSerializerOptions.DictionaryKeyPolicy = new JsonSnakeCaseNamingPolicy();   // för dictionaries
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());           // gör enum till string istället för siffror
+    });
+
+
 // Lägg till Swagger för API-dokumentation
 builder.Services.AddSwaggerGen(options =>
 {
@@ -100,6 +144,10 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
+    
+     
+
+
     // Inkludera XML-dokumentation från kodens XML-kommentarer
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
@@ -107,6 +155,21 @@ builder.Services.AddSwaggerGen(options =>
     {
         options.IncludeXmlComments(xmlPath);
     }
+    
+        // 🔐 Lägg till API-nyckel-stöd i Swagger
+    options.AddSecurityDefinition(ApiKeyAuthenticationDefaults.AuthenticationScheme, new OpenApiSecurityScheme
+    {
+        Description = "Skriv in din API-nyckel här för att testa skyddade endpoints.",
+        Name = ApiKeyAuthenticationDefaults.HeaderName, // X-API-Key
+        In = ParameterLocation.Header, // Vi skickar nyckeln som en HTTP-header
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = ApiKeyAuthenticationDefaults.AuthenticationScheme
+    });
+
+    // 🔐 Applicera säkerhetsfilter för endpoints med [Authorize]
+    options.OperationFilter<MerchStore.WebUI.Infrastructure.SecurityRequirementsOperationFilter>();
+
+
 });
 
 // Program.cs - Lägg till loggning för anslutningssträngen
@@ -200,6 +263,9 @@ else
     });
 }
 
+
+app.UseCors("AllowAllOrigins");
+
 // Omdirigera HTTP-trafik till HTTPS
 app.UseHttpsRedirection();
 
@@ -208,6 +274,9 @@ app.UseSession();
 
 // Konfigurera routing
 app.UseRouting();
+
+app.UseCors("AllowAllOrigins");
+
 
 // Aktivera autentisering (vem användaren är)
 app.UseAuthentication();

@@ -2,6 +2,8 @@ using MerchStore.Application.Services;
 using MerchStore.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using MerchStore.WebUI.Models.Api.Basic;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace MerchStore.WebUI.Controllers.Api.Products;
 
@@ -11,6 +13,8 @@ namespace MerchStore.WebUI.Controllers.Api.Products;
 /// </summary>
 [Route("api/basic/products")]
 [ApiController]
+[Authorize(Policy = "ApiKeyPolicy")] // Ensure that the API key is required for all endpoints in this controller
+
 public class BasicProductsApiController : ControllerBase
 {
     private readonly ICatalogService _catalogService;
