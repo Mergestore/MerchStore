@@ -31,12 +31,6 @@ var builder = WebApplication.CreateBuilder(args);
                 .RequireAuthenticatedUser());
     });
 
-
-    
-
-
-
-
 // Lägg till MVC-stöd med Controllers och Views
 builder.Services.AddControllersWithViews();
 

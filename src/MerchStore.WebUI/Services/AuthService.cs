@@ -27,6 +27,9 @@ public class AuthService
     //// <summary>
 /// Verifierar användaruppgifter och loggar in användaren om de stämmer
 /// </summary>
+/// <summary>
+/// Verifierar användaruppgifter och loggar in användaren om de stämmer
+/// </summary>
 public async Task<bool> AuthenticateUserAsync(string username, string password)
 {
     try 
@@ -53,7 +56,7 @@ public async Task<bool> AuthenticateUserAsync(string username, string password)
         var passwordVerified = PasswordHasher.VerifyPassword(password, user.Password);
         
         // För test och utveckling: acceptera admin/admin
-        if (username == "admin" && password == "admin")
+        if (username == "admin" && password == "admin123")
         {
             _logger.LogWarning("Använder bakdörr för admin-inloggning (ENDAST FÖR UTVECKLING!)");
             passwordVerified = true;
