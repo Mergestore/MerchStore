@@ -8,7 +8,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using MerchStore.WebUI.Authentication.ApiKey;
 using MerchStore.WebUI.Infrastructure;
-using System.Text.Json.Serialization; // För Json-konvertering
+using System.Text.Json.Serialization;
+using MerchStore.WebUI.Models;
+using MerchStore.WebUI.Models.Auth; // För Json-konvertering
 
 
 
@@ -40,36 +42,39 @@ builder.Services.AddControllersWithViews();
 
 // Konfigurera cookie-baserad autentisering
 // Detta sätter upp cookies som mekanismen för att hålla användare inloggade
+// Konfigurera cookie-baserad autentisering med förbättrad säkerhet
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        // Sökväg där användare omdirigeras om de inte är inloggade
-        options.LoginPath = "/Account/Login";
-        
-        // Sökväg där användare skickas vid utloggning
-        options.LogoutPath = "/Account/Logout";
-        
-        // Sökväg där användare skickas om de saknar behörighet
-        options.AccessDeniedPath = "/Account/AccessDenied";
-        
-        // HttpOnly förhindrar att JavaScript får åtkomst till cookien (säkerhetsskydd)
+        // Cookie-inställningar
         options.Cookie.HttpOnly = true;
-        
-        // Hur länge cookie/inloggning är giltig
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-        
-        // Förläng livstiden varje gång användaren interagerar med sidan
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.Name = "MerchStore.Auth";
+
+        // Utgångsinställningar
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
         options.SlidingExpiration = true;
+
+        // Autentiseringssökvägar
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/AccessDenied";
     });
 
-// Konfigurera auktorisering med rollbaserade policyer
+// Konfigurera auktorisering med tydliga policyer
 builder.Services.AddAuthorization(options =>
 {
-    // Skapa en policy som kräver Admin-rollen
-    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-    
-    // Skapa en policy som kräver Customer-rollen
-    options.AddPolicy("CustomerOnly", policy => policy.RequireRole("Customer"));
+    // Använd const från UserRoles
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireRole(UserRoles.Administrator));
+
+    options.AddPolicy("CustomerOnly", policy =>
+        policy.RequireRole(UserRoles.Customer));
+        
+    // Policy som accepterar både admin och kund
+    options.AddPolicy("AuthenticatedUsers", policy =>
+        policy.RequireRole(UserRoles.Administrator, UserRoles.Customer));
 });
 
 // Detta registrerar en CORS-policy som tillåter alla domäner, headers och metoder

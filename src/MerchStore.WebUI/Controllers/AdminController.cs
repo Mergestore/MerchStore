@@ -3,34 +3,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MerchStore.WebUI.Controllers;
 
-/// <summary>
-/// Controller för administratörsfunktioner
-/// Endast tillgänglig för användare med rollen Admin
-/// </summary>
 [Authorize(Policy = "AdminOnly")]
 public class AdminController : Controller
 {
-    /// <summary>
-    /// Visar administratörens Dashboard
-    /// </summary>
-    public IActionResult Index()
+    public IActionResult Dashboard()
     {
         return View();
     }
 
-    /// <summary>
-    /// Visar en lista över alla produkter för administrering
-    /// </summary>
-    public IActionResult Products()
-    {
-        return View();
-    }
-
-    /// <summary>
-    /// Visar en lista över användare för administrering
-    /// </summary>
     public IActionResult Users()
     {
-        return View();
+        // In a real application, this would fetch from a database
+        var users = new List<string> { "admin", "john.doe" };
+        return View(users);
     }
 }

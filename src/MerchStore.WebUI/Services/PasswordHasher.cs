@@ -4,69 +4,65 @@ using System.Text;
 namespace MerchStore.WebUI.Services;
 
 /// <summary>
-/// Hjälpklass för hantering av lösenordshashing och validering.
+/// Hjälpklass för hantering av lösenordshashing och validering med BCrypt.
 /// </summary>
 public static class PasswordHasher
 {
-    // Konstanter för hashningsalgoritmen
-    private const int KeySize = 64;
-    private const int Iterations = 350000;
-    private static readonly HashAlgorithmName HashAlgorithm = HashAlgorithmName.SHA512;
+    // Arbetsfaktor för BCrypt (högre värde = säkrare men långsammare)
+    private const int WorkFactor = 12;
 
     /// <summary>
-    /// Genererar ett slumpmässigt salt för lösenordshashing
+    /// Hashar ett lösenord med BCrypt och genererar automatiskt ett salt
+    /// </summary>
+    public static string HashPassword(string password)
+    {
+        return BCrypt.Net.BCrypt.HashPassword(password, WorkFactor);
+    }
+    
+    /// <summary>
+    /// Genererar ett salt för bakåtkompatibilitet
     /// </summary>
     public static string GenerateSalt()
     {
-        var saltBytes = RandomNumberGenerator.GetBytes(KeySize);
-        return Convert.ToHexString(saltBytes);
+        // Salt genereras automatiskt i BCrypt.HashPassword
+        return BCrypt.Net.BCrypt.GenerateSalt(WorkFactor);
     }
 
     /// <summary>
-    /// Hashar ett lösenord med angivet salt
+    /// Verifierar ett lösenord mot en lagrad BCrypt-hash
     /// </summary>
-    public static string HashPassword(string password, string salt)
+    public static bool VerifyPassword(string password, string hash, string? salt = null)
     {
-        var saltBytes = Convert.FromHexString(salt);
-        
-        var hashBytes = Rfc2898DeriveBytes.Pbkdf2(
-            Encoding.UTF8.GetBytes(password),
-            saltBytes,
-            Iterations,
-            HashAlgorithm,
-            KeySize);
-            
-        return Convert.ToHexString(hashBytes);
-    }
-
-    /// <summary>
-    /// Verifierar ett lösenord mot en lagrad hash och salt
-    /// </summary>
-    public static bool VerifyPassword(string password, string hash, string salt)
-    {
-        // Extremt förenklad implementation för utveckling och testning
-        // I produktion skulle denna metod vara mycket säkrare!
-        if (password == "admin" && 
-            hash == "6B40595C770641ABD3CCCC3247608ACFFB73308F3C8F25BC86AA12957616FE19D153051D5C2CEB511FB0A9876EB820426A1A80203A74740E36A91606F1A163EA")
+        // För bakåtkompatibilitet med befintliga användare (ta bort i produktion)
+        if (password == "admin" && hash == "admin")
         {
             return true;
         }
         
         try
         {
-            var hashToVerify = Rfc2898DeriveBytes.Pbkdf2(
-                Encoding.UTF8.GetBytes(password),
-                Convert.FromHexString(salt),
-                Iterations,
-                HashAlgorithm,
-                KeySize);
-                
-            return CryptographicOperations.FixedTimeEquals(hashToVerify, Convert.FromHexString(hash));
+            // BCrypt-hash innehåller redan saltet, så vi ignorerar salt-parametern
+            return BCrypt.Net.BCrypt.Verify(password, hash);
         }
-        catch (Exception)
+        catch
         {
-            // Om något går fel (t.ex. felaktigt format på hash eller salt), returnera false
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Kontrollerar om en hash behöver uppgraderas (t.ex. om arbetsfaktorn ändrats)
+    /// </summary>
+    public static bool NeedsUpgrade(string hash)
+    {
+        try
+        {
+            return BCrypt.Net.BCrypt.PasswordNeedsRehash(hash, WorkFactor);
+        }
+        catch
+        {
+            // Om hash är i gammalt format behöver den definitivt uppgraderas
+            return true;
         }
     }
 }

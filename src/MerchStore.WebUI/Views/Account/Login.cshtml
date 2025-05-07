@@ -1,36 +1,42 @@
 @model MerchStore.WebUI.Models.Auth.LoginViewModel
 
 @{
-    ViewData["Title"] = "Logga in";
+    ViewData["Title"] = "Login";
 }
 
-<div class="row">
-    <div class="col-md-4 mx-auto mt-5">
+<div class="row justify-content-center">
+    <div class="col-md-6">
         <div class="card shadow">
             <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">@ViewData["Title"]</h4>
+                <h2 class="fs-4 mb-0">@ViewData["Title"]</h2>
             </div>
             <div class="card-body">
-                <form id="loginForm" method="post">
-                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-                    <input type="hidden" asp-for="ReturnUrl" />
+                <form method="post" asp-antiforgery="true">
+                    <div asp-validation-summary="All" class="text-danger"></div>
 
-                    <div class="form-group mb-3">
-                        <label asp-for="Username" class="control-label"></label>
-                        <input asp-for="Username" class="form-control" autocomplete="username" />
+                    <div class="mb-3">
+                        <label asp-for="Username" class="form-label"></label>
+                        <input asp-for="Username" class="form-control" autocomplete="username" aria-required="true" />
                         <span asp-validation-for="Username" class="text-danger"></span>
                     </div>
 
-                    <div class="form-group mb-4">
-                        <label asp-for="Password" class="control-label"></label>
-                        <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label"></label>
+                        <input asp-for="Password" class="form-control" autocomplete="current-password" aria-required="true" />
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
 
-                    <div class="form-group d-grid">
-                        <button type="submit" class="btn btn-primary">Logga in</button>
+                    <div>
+                        <button type="submit" class="btn btn-primary w-100">Log in</button>
                     </div>
                 </form>
+            </div>
+            <div class="card-footer text-muted text-center">
+                <small>
+                    <i class="bi bi-info-circle"></i> Test Credentials:<br>
+                    Admin: admin / admin123<br>
+                    Customer: john.doe / password123
+                </small>
             </div>
         </div>
     </div>

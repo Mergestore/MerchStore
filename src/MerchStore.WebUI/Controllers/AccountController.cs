@@ -1,117 +1,100 @@
+using System.Security.Claims;
+using MerchStore.WebUI.Models;
+using MerchStore.WebUI.Models.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MerchStore.WebUI.Models.Auth;
-using MerchStore.WebUI.Services;
 
-namespace MerchStore.WebUI.Controllers;
+namespace MerchStore.Controllers;
 
-/// <summary>
-/// Controller för att hantera användarinloggning och utloggning
-/// </summary>
 public class AccountController : Controller
 {
-    private readonly AuthService _authService;
-    private readonly ILogger<AccountController> _logger;
-
-    /// <summary>
-    /// Konstruktor med dependency injection
-    /// </summary>
-    public AccountController(AuthService authService, ILogger<AccountController> logger)
+    // Simulated user database - in production, this would be in a database
+    private static readonly Dictionary<string, (string PasswordHash, string Role)> Users = new()
     {
-        _authService = authService;
-        _logger = logger;
-    }
+        // Password: "admin123" (hashed with BCrypt)
+        ["admin"] = ("$2a$11$rBNxyD7V1aPNtsqTM5hAj.kxd67q7wTBVRUPnnLU9OYbTpNx8xfQm", UserRoles.Administrator),
 
-    /// <summary>
-    /// Visar inloggningssidan
-    /// </summary>
+        // Password: "password123" (hashed with BCrypt)
+        ["john.doe"] = ("$2a$11$J7IZK4jZMYJGCCKU/NUEBOxWts7eAGWmrjbYbzchuaa.bXNBGKrDS", UserRoles.Customer)
+    };
+
     [HttpGet]
-    [AllowAnonymous]
     public IActionResult Login(string? returnUrl = null)
     {
-        _logger.LogInformation("Visar inloggningssidan. ReturnUrl: {ReturnUrl}", returnUrl);
-        
-        // Visa felmeddelande om det finns i TempData
-        if (TempData["ErrorMessage"] != null)
-        {
-            ModelState.AddModelError(string.Empty, TempData["ErrorMessage"]!.ToString()!);
-        }
-
-        // Sätt returnUrl till hemskärmen om den inte är specificerad
-        returnUrl ??= Url.Content("~/");
-
-        // Skapa och returnera vy-modellen
-        var viewModel = new LoginViewModel
-        {
-            ReturnUrl = returnUrl
-        };
-
-        return View(viewModel);
+        ViewData["ReturnUrl"] = returnUrl;
+        return View();
     }
 
-    /// <summary>
-    /// Hanterar inloggningsförsök
-    /// </summary>
     [HttpPost]
-    [AllowAnonymous]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(LoginViewModel model)
+    public async Task<IActionResult> LoginAsync(LoginViewModel model, string? returnUrl = null)
     {
-        _logger.LogInformation("Inloggningsförsök för användare: {Username}", model.Username);
-        
-        // Standardisera returnUrl
-        model.ReturnUrl ??= Url.Content("~/");
+        ViewData["ReturnUrl"] = returnUrl;
 
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid)
         {
-            // Försök autentisera användaren
-            var isAuthenticated = await _authService.AuthenticateUserAsync(model.Username, model.Password);
+            return View(model);
+        }
 
-            if (isAuthenticated)
+        // Check if user exists and verify password
+        if (Users.TryGetValue(model.Username ?? "", out var userData) &&
+            BCrypt.Net.BCrypt.Verify(model.Password, userData.PasswordHash))
+        {
+            // Create claims including role
+            var claims = new List<Claim>
             {
-                _logger.LogInformation("Användare {Username} loggades in framgångsrikt", model.Username);
-                // Lyckad inloggning, omdirigera till returnUrl
-                return LocalRedirect(model.ReturnUrl);
+                new Claim(ClaimTypes.Name, model.Username!),
+                new Claim(ClaimTypes.Role, userData.Role)
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            // Sign in with enhanced security options
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal);
+
+            // Redirect to return URL if valid, otherwise to home
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
             }
 
-            _logger.LogWarning("Misslyckad inloggning för användare: {Username}", model.Username);
-            // Felaktig inloggning, visa felmeddelande
-            ModelState.AddModelError(string.Empty, "Felaktigt användarnamn eller lösenord.");
-        }
-        else
-        {
-            _logger.LogInformation("Validering av inloggningsformulär misslyckades");
+            return RedirectToAction("Index", "Home");
         }
 
-        // Om vi kommer hit har något gått fel, visa formuläret igen
+        ModelState.AddModelError(string.Empty, "Invalid login attempt.");
         return View(model);
     }
 
-    /// <summary>
-    /// Loggar ut användaren
-    /// </summary>
-    [HttpGet]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
-        _logger.LogInformation("Loggar ut användare: {Username}", User.Identity?.Name);
-        
-        // Logga ut användaren
-        await _authService.SignOutAsync();
-        
-        // Omdirigera till hemsidan
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return RedirectToAction("Index", "Home");
     }
 
-    /// <summary>
-    /// Visar sidan för nekad åtkomst
-    /// </summary>
     [HttpGet]
-    [AllowAnonymous]
     public IActionResult AccessDenied()
     {
-        _logger.LogWarning("Åtkomst nekad för användare: {Username}", User.Identity?.Name);
         return View();
+    }
+
+    // Utility method to hash passwords (for demonstration)
+    [HttpGet]
+    [Authorize(Roles = UserRoles.Administrator)]
+    public IActionResult HashPassword(string password)
+    {
+        if (string.IsNullOrEmpty(password))
+        {
+            return BadRequest("Password is required");
+        }
+
+        var hash = BCrypt.Net.BCrypt.HashPassword(password);
+        return Ok(new { password, hash });
     }
 }
