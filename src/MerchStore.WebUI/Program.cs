@@ -243,11 +243,23 @@ using (var scope = app.Services.CreateScope())
 // Konfigurera HTTP-request-pipelinen baserat på miljö (utveckling/produktion)
 if (!app.Environment.IsDevelopment())
 {
+    
+    // I utvecklingsmiljö, fyll databasen med testdata
+    app.Services.SeedDatabaseAsync().Wait();
+
+    // Aktivera Swagger UI för API-testning i utvecklingsmiljö
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "MerchStore API V1");
+    });
+    
+    // Kommenterade bort detta  bara
     // I produktion, använd en generisk felsida
-    app.UseExceptionHandler("/Home/Error");
+   // app.UseExceptionHandler("/Home/Error");
     
     // Aktivera HSTS för säkrare HTTPS-anslutningar
-    app.UseHsts();
+    //app.UseHsts();
 }
 else
 {
