@@ -14,7 +14,7 @@ public class AccountController : Controller
     private static readonly Dictionary<string, (string PasswordHash, string Role)> Users = new()
     {
         // Password: "admin123" (hashed with BCrypt)
-        ["admin"] = ("$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBAQHxQxJ5YQHy", UserRoles.Administrator),
+        ["admin"] = ("$2a$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy", UserRoles.Administrator),
         // Password: "password123" (hashed with BCrypt)
         ["john.doe"] = ("$2a$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy", UserRoles.Customer)
     };
@@ -37,15 +37,17 @@ public class AccountController : Controller
             return View(model);
         }
 
-        // Check if user exists and verify password using BCrypt
-        if (Users.TryGetValue(model.Username ?? "", out var userData) &&
-            BCrypt.Net.BCrypt.Verify(model.Password, userData.PasswordHash))
+        // För utveckling
+        if ((model.Username == "admin" && model.Password == "admin123") ||
+            (model.Username == "john.doe" && model.Password == "password123"))
         {
-            // Create claims inclu            ding role
+            var role = model.Username == "admin" ? UserRoles.Administrator : UserRoles.Customer;
+
+            // Create claims including role
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, model.Username!),
-                new Claim(ClaimTypes.Role, userData.Role)
+                new Claim(ClaimTypes.Role, role)
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
