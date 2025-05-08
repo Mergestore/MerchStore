@@ -255,6 +255,7 @@ if (!app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "MerchStore API V1");
     });
     
+    // Kommenterade bort detta  bara
     // I produktion, använd en generisk felsida
    // app.UseExceptionHandler("/Home/Error");
     
