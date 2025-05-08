@@ -5,20 +5,27 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace MerchStore.Controllers;
 
+/// <summary>
+/// Hanterar användarinloggning, utloggning och åtkomstkontroll
+/// </summary>
 public class AccountController : Controller
 {
-    // Simulated user database - in production, this would be in a database
-    private static readonly Dictionary<string, (string PasswordHash, string Role)> Users = new()
-    {
-        // Password: "admin123" (hashed with BCrypt)
-        ["admin"] = ("$2a$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy", UserRoles.Administrator),
-        // Password: "password123" (hashed with BCrypt)
-        ["john.doe"] = ("$2a$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy", UserRoles.Customer)
-    };
+    private readonly ILogger<AccountController> _logger;
+    private readonly IConfiguration _configuration;
 
+    public AccountController(
+        ILogger<AccountController> logger,
+        IConfiguration configuration)
+    {
+        _logger = logger;
+        _configuration = configuration;
+    }
+
+    // Visar inloggningssidan
     [HttpGet]
     public IActionResult Login(string? returnUrl = null)
     {
@@ -26,6 +33,7 @@ public class AccountController : Controller
         return View();
     }
 
+    // Hanterar inloggningsförsök
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> LoginAsync(LoginViewModel model, string? returnUrl = null)
@@ -37,13 +45,9 @@ public class AccountController : Controller
             return View(model);
         }
 
-        // För utveckling
-        if ((model.Username == "admin" && model.Password == "admin123") ||
-            (model.Username == "john.doe" && model.Password == "password123"))
+        if (IsValidCookieAuthUser(model.Username, model.Password))
         {
             var role = model.Username == "admin" ? UserRoles.Administrator : UserRoles.Customer;
-
-            // Create claims including role
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, model.Username!),
@@ -53,49 +57,53 @@ public class AccountController : Controller
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);
 
-            // Sign in
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal);
 
-            // Redirect to return URL if valid, otherwise to home
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
-
-            return RedirectToAction("Index", "Home");
+            _logger.LogInformation("Användare loggade in med cookie-autentisering.");
+            return RedirectToLocal(returnUrl);
         }
 
-        ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+        ModelState.AddModelError(string.Empty, "Ogiltigt inloggningsförsök.");
         return View(model);
     }
 
+    // Hanterar utloggning
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        _logger.LogInformation("Användare loggade ut.");
         return RedirectToAction("Index", "Home");
     }
 
+    // Visar åtkomstnekad-sidan
     [HttpGet]
     public IActionResult AccessDenied()
     {
         return View();
     }
 
-    // Utility method to hash passwords (for demonstration)
-    [HttpGet]
-    [Authorize(Roles = UserRoles.Administrator)]
-    public IActionResult HashPassword(string password)
+    // Validerar användarnamn och lösenord (endast för utveckling)
+    private bool IsValidCookieAuthUser(string? username, string? password)
     {
-        if (string.IsNullOrEmpty(password))
-        {
-            return BadRequest("Password is required");
-        }
+        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            return false;
 
-        var hash = BCrypt.Net.BCrypt.HashPassword(password, 12); // Using work factor 12 for security
-        return Ok(new { password, hash });
+        // För utveckling
+        return (username == "admin" && password == "admin123") ||
+               (username == "john.doe" && password == "password123");
+    }
+
+    // Omdirigerar till returnUrl om den är lokal, annars till startsidan
+    private IActionResult RedirectToLocal(string? returnUrl)
+    {
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+        return RedirectToAction("Index", "Home");
     }
 }

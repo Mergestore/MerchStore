@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MerchStore.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace MerchStore.Infrastructure.Persistence;
 
@@ -7,7 +9,7 @@ namespace MerchStore.Infrastructure.Persistence;
 /// The database context that provides access to the database through Entity Framework Core.
 /// This is the central class in EF Core and serves as the primary point of interaction with the database.
 /// </summary>
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityDbContext<IdentityUser>
 {
     /// <summary>
     /// DbSet represents a collection of entities of a specific type in the database.

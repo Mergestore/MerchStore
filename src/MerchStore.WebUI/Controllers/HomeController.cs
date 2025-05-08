@@ -32,10 +32,18 @@ public class HomeController : Controller
             RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
         });
     }
-    
+
     [Authorize] // This attribute ensures that only authenticated users can access this action.
     public IActionResult WhoAmI()
     {
-        return View();
+        var viewModel = new
+        {
+            IsAuthenticated = User.Identity?.IsAuthenticated,
+            AuthenticationType = User.Identity?.AuthenticationType,
+            Name = User.Identity?.Name,
+            Claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList()
+        };
+
+        return View(viewModel);
     }
 }
