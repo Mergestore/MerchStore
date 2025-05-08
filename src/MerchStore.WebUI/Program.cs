@@ -11,8 +11,7 @@ using MerchStore.WebUI.Infrastructure;
 using System.Text.Json.Serialization;
 using MerchStore.WebUI.Models;
 using MerchStore.WebUI.Models.Auth; // För Json-konvertering
-
-
+using Microsoft.AspNetCore.Identity;
 
 
 // Skapa en WebApplicationBuilder som är startpunkten för att konfigurera applikationen
@@ -34,39 +33,30 @@ builder.Services.AddAuthorization(options =>
 // Lägg till MVC-stöd med Controllers och Views
 builder.Services.AddControllersWithViews();
 
-// Konfigurera cookie-baserad autentisering
-// Detta sätter upp cookies som mekanismen för att hålla användare inloggade
 // Konfigurera cookie-baserad autentisering med förbättrad säkerhet
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        // Cookie-inställningar
-        options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Changed to None for development
-        options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.Name = "MerchStore.Auth";
-
-        // Utgångsinställningar
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
-        options.SlidingExpiration = true;
-
-        // Autentiseringssökvägar
-        options.LoginPath = "/Account/Login";
-        options.LogoutPath = "/Account/Logout";
-        options.AccessDeniedPath = "/Account/AccessDenied";
-    });
-
-// Konfigurera auktorisering med tydliga policyer
-builder.Services.AddAuthorization(options =>
+builder.Services.AddAuthentication(options =>
 {
-    options.AddPolicy("AdminOnly", policy =>
-        policy.RequireRole(UserRoles.Administrator));
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{
+    // Cookie-inställningar
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.None
+        : CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.Name = "MerchStore.Auth";
 
-    options.AddPolicy("CustomerOnly", policy =>
-        policy.RequireRole(UserRoles.Customer));
+    // Utgångsinställningar
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
+    options.SlidingExpiration = true;
 
-    options.AddPolicy("AuthenticatedUsers", policy =>
-        policy.RequireRole(UserRoles.Administrator, UserRoles.Customer));
+    // Autentiseringssökvägar
+    options.LoginPath = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
 // Detta registrerar en CORS-policy som tillåter alla domäner, headers och metoder
@@ -140,7 +130,7 @@ builder.Services.AddSwaggerGen(options =>
             Email = "support@merchstore.example.com"
         }
     });
-    
+
 
 
     // Inkludera XML-dokumentation från kodens XML-kommentarer

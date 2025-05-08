@@ -1,4 +1,3 @@
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,61 +9,70 @@ using MerchStore.Infrastructure.Persistence.Repositories;
 namespace MerchStore.Infrastructure;
 
 /// <summary>
-/// Contains extension methods for registering Infrastructure layer services with the dependency injection container.
-/// This keeps all registration logic in one place and makes it reusable.
+/// Innehåller tilläggsmetoder för att registrera infrastrukturlagrets tjänster i beroendeinjektionscontainern.
+/// Detta håller all registreringslogik på ett ställe och gör den återanvändbar.
 /// </summary>
 public static class DependencyInjection
 {
     /// <summary>
-    /// Adds Infrastructure layer services to the DI container
+    /// Registrerar alla nödvändiga tjänster för infrastrukturlagret i DI-containern.
+    /// Detta inkluderar:
+    /// - Databaskontext (SQL Server)
+    /// - Repositories för dataåtkomst
+    /// - Unit of Work för transaktionshantering
+    /// - Repository Manager för att hantera repositories
+    /// - Loggning
+    /// - Databasseedning
     /// </summary>
-    /// <param name="services">The service collection to add services to</param>
-    /// <param name="configuration">The configuration for database connection strings</param>
-    /// <returns>The service collection for chaining</returns>
-        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
-        {
-            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
-            {
-                // Använd InMemory-databas för lokal utveckling
-                services.AddDbContext<AppDbContext>(options =>
-                    options.UseInMemoryDatabase("MerchStoreDb"));
-            }
-            else
-            {
-                // Använd Azure SQL för produktion
-                services.AddDbContext<AppDbContext>(options =>
-                    options.UseSqlServer(
-                        configuration.GetConnectionString("DefaultConnection"),
-                        b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
-            }
-        // Register repositories
+    /// <param name="services">Tjänstsamlingen att lägga till tjänster i</param>
+    /// <param name="configuration">Konfigurationen för databasanslutningssträngar</param>
+    /// <returns>Tjänstsamlingen för kedjning</returns>
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        // Hämta anslutningssträngen från konfigurationen
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+        // Konfigurera SQL Server som databas
+        services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlServer(
+                connectionString,
+                b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
+
+        // Registrera repositories för dataåtkomst
+        // Scoped betyder att en ny instans skapas per HTTP-request
         services.AddScoped<IProductRepository, ProductRepository>();
 
-        // Register Unit of Work
+        // Registrera Unit of Work för att hantera transaktioner
+        // Detta säkerställer att alla databasoperationer i en transaktion antingen lyckas eller misslyckas tillsammans
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-        // Register Repository Manager
+        // Registrera Repository Manager för att hantera alla repositories
+        // Detta ger en central punkt för att hantera alla databasoperationer
         services.AddScoped<IRepositoryManager, RepositoryManager>();
 
-        // Add logging services if not already added
+        // Lägg till loggningstjänster om de inte redan är tillagda
         services.AddLogging();
 
-        // Register DbContext seeder
+        // Registrera databasseedning för att fylla databasen med initial data
         services.AddScoped<AppDbContextSeeder>();
 
         return services;
     }
 
     /// <summary>
-    /// Seeds the database with initial data.
-    /// This is an extension method on IServiceProvider to allow it to be called from Program.cs.
+    /// Fyller databasen med initial data.
+    /// Detta är en tilläggsmetod på IServiceProvider som kan anropas från Program.cs.
+    /// Metoden skapar en ny scope för att hantera beroenden och kör sedan seedningen.
     /// </summary>
-    /// <param name="serviceProvider">The service provider to resolve dependencies</param>
-    /// <returns>A task representing the asynchronous operation</returns>
+    /// <param name="serviceProvider">Service provider för att lösa beroenden</param>
+    /// <returns>En task som representerar den asynkrona operationen</returns>
     public static async Task SeedDatabaseAsync(this IServiceProvider serviceProvider)
     {
+        // Skapa en ny scope för att hantera beroenden
         using var scope = serviceProvider.CreateScope();
+        // Hämta seedern från DI-containern
         var seeder = scope.ServiceProvider.GetRequiredService<AppDbContextSeeder>();
+        // Kör seedningen
         await seeder.SeedAsync();
     }
 }
