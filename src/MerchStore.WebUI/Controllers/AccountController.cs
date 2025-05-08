@@ -14,10 +14,9 @@ public class AccountController : Controller
     private static readonly Dictionary<string, (string PasswordHash, string Role)> Users = new()
     {
         // Password: "admin123" (hashed with BCrypt)
-        ["admin"] = ("$2a$11$rBNxyD7V1aPNtsqTM5hAj.kxd67q7wTBVRUPnnLU9OYbTpNx8xfQm", UserRoles.Administrator),
-
+        ["admin"] = ("$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBAQHxQxJ5YQHy", UserRoles.Administrator),
         // Password: "password123" (hashed with BCrypt)
-        ["john.doe"] = ("$2a$11$J7IZK4jZMYJGCCKU/NUEBOxWts7eAGWmrjbYbzchuaa.bXNBGKrDS", UserRoles.Customer)
+        ["john.doe"] = ("$2a$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy", UserRoles.Customer)
     };
 
     [HttpGet]
@@ -38,11 +37,11 @@ public class AccountController : Controller
             return View(model);
         }
 
-        // Check if user exists and verify password
+        // Check if user exists and verify password using BCrypt
         if (Users.TryGetValue(model.Username ?? "", out var userData) &&
             BCrypt.Net.BCrypt.Verify(model.Password, userData.PasswordHash))
         {
-            // Create claims including role
+            // Create claims inclu            ding role
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, model.Username!),
@@ -52,7 +51,7 @@ public class AccountController : Controller
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);
 
-            // Sign in with enhanced security options
+            // Sign in
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal);
@@ -94,7 +93,7 @@ public class AccountController : Controller
             return BadRequest("Password is required");
         }
 
-        var hash = BCrypt.Net.BCrypt.HashPassword(password);
+        var hash = BCrypt.Net.BCrypt.HashPassword(password, 12); // Using work factor 12 for security
         return Ok(new { password, hash });
     }
 }

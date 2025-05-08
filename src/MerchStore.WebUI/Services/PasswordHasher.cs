@@ -18,7 +18,7 @@ public static class PasswordHasher
     {
         return BCrypt.Net.BCrypt.HashPassword(password, WorkFactor);
     }
-    
+
     /// <summary>
     /// Genererar ett salt för bakåtkompatibilitet
     /// </summary>
@@ -34,14 +34,7 @@ public static class PasswordHasher
     public static bool VerifyPassword(string password, string hashedPassword)
     {
         Console.WriteLine($"DEBUG: Försöker verifiera lösenord mot hash: {hashedPassword}");
-    
-        // För testning - acceptera alla lösenord för admin
-        if (password.Length > 0)
-        {
-            Console.WriteLine("DEBUG: Godkänner alla lösenord för testning");
-            return true;
-        }
-    
+
         try
         {
             var result = BCrypt.Net.BCrypt.Verify(password, hashedPassword);

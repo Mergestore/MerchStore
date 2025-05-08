@@ -18,18 +18,18 @@ using MerchStore.WebUI.Models.Auth; // För Json-konvertering
 // Skapa en WebApplicationBuilder som är startpunkten för att konfigurera applikationen
 var builder = WebApplication.CreateBuilder(args);
 
-    // 🔐 Lägg till API-nyckel-autentisering
-    builder.Services.AddAuthentication()
-        .AddApiKey(builder.Configuration["ApiKey:Value"] 
-        ?? throw new InvalidOperationException("API Key is not configured in appsettings."));
+// Lägg till API-nyckel-autentisering
+builder.Services.AddAuthentication()
+    .AddApiKey(builder.Configuration["ApiKey:Value"]
+    ?? throw new InvalidOperationException("API Key is not configured in appsettings."));
 
-    // 🔐 Lägg till en policy som kräver att man är autentiserad via vår API-nyckel
-    builder.Services.AddAuthorization(options =>
-    {
-        options.AddPolicy("ApiKeyPolicy", policy =>
-            policy.AddAuthenticationSchemes(ApiKeyAuthenticationDefaults.AuthenticationScheme)
-                .RequireAuthenticatedUser());
-    });
+// Lägg till en policy som kräver att man är autentiserad via vår API-nyckel
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("ApiKeyPolicy", policy =>
+        policy.AddAuthenticationSchemes(ApiKeyAuthenticationDefaults.AuthenticationScheme)
+            .RequireAuthenticatedUser());
+});
 
 // Lägg till MVC-stöd med Controllers och Views
 builder.Services.AddControllersWithViews();
@@ -42,7 +42,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         // Cookie-inställningar
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Changed to None for development
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.Cookie.Name = "MerchStore.Auth";
 
@@ -59,29 +59,27 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 // Konfigurera auktorisering med tydliga policyer
 builder.Services.AddAuthorization(options =>
 {
-    // Använd const från UserRoles
     options.AddPolicy("AdminOnly", policy =>
         policy.RequireRole(UserRoles.Administrator));
 
     options.AddPolicy("CustomerOnly", policy =>
         policy.RequireRole(UserRoles.Customer));
-        
-    // Policy som accepterar både admin och kund
+
     options.AddPolicy("AuthenticatedUsers", policy =>
         policy.RequireRole(UserRoles.Administrator, UserRoles.Customer));
 });
 
 // Detta registrerar en CORS-policy som tillåter alla domäner, headers och metoder
-    builder.Services.AddCors(options =>
-    {
-        options.AddPolicy("AllowAllOrigins",
-            builder =>
-            {
-                builder.AllowAnyOrigin()  // Vem som helst får anropa (⚠️ i produktion: begränsa!)
-                    .AllowAnyHeader()  // Tillåt alla typer av headers
-                    .AllowAnyMethod(); // Tillåt GET, POST, PUT, DELETE etc
-            });
-    });
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins",
+        builder =>
+        {
+            builder.AllowAnyOrigin()  // Vem som helst får anropa (⚠️ i produktion: begränsa!)
+                .AllowAnyHeader()  // Tillåt alla typer av headers
+                .AllowAnyMethod(); // Tillåt GET, POST, PUT, DELETE etc
+        });
+});
 
 // Lägg till minnescache för sessioner
 builder.Services.AddDistributedMemoryCache();
@@ -91,10 +89,10 @@ builder.Services.AddSession(options =>
 {
     // Hur länge en session är aktiv
     options.IdleTimeout = TimeSpan.FromMinutes(30);
-    
+
     // Förhindra klientskript från att komma åt sessionscookien
     options.Cookie.HttpOnly = true;
-    
+
     // Markera cookien som nödvändig (för GDPR-samtycke)
     options.Cookie.IsEssential = true;
 });
@@ -142,9 +140,7 @@ builder.Services.AddSwaggerGen(options =>
             Email = "support@merchstore.example.com"
         }
     });
-
     
-     
 
 
     // Inkludera XML-dokumentation från kodens XML-kommentarer
@@ -154,8 +150,7 @@ builder.Services.AddSwaggerGen(options =>
     {
         options.IncludeXmlComments(xmlPath);
     }
-    
-        // 🔐 Lägg till API-nyckel-stöd i Swagger
+    //  Lägg till API-nyckel-stöd i Swagger
     options.AddSecurityDefinition(ApiKeyAuthenticationDefaults.AuthenticationScheme, new OpenApiSecurityScheme
     {
         Description = "Skriv in din API-nyckel här för att testa skyddade endpoints.",
@@ -190,19 +185,19 @@ using (var scope = app.Services.CreateScope())
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogInformation("Förbereder databasinitiering...");
-        
+
         var context = services.GetRequiredService<AppDbContext>();
-        
+
         // Kontrollera anslutningen
         var canConnect = await context.Database.CanConnectAsync();
         logger.LogInformation($"Kan ansluta till databasen: {canConnect}");
-        
+
         if (canConnect)
         {
             // Kör migrationer
             logger.LogInformation("Applicerar migrationer...");
             await context.Database.MigrateAsync();
-            
+
             // Seeda databasen
             logger.LogInformation("Startar seeding...");
             var seeder = services.GetRequiredService<AppDbContextSeeder>();
@@ -229,7 +224,7 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<AppDbContext>();
         context.Database.Migrate();
-        
+
         // Seed-databasen efter migrering
         await services.SeedDatabaseAsync();
     }
@@ -243,7 +238,7 @@ using (var scope = app.Services.CreateScope())
 // Konfigurera HTTP-request-pipelinen baserat på miljö (utveckling/produktion)
 if (!app.Environment.IsDevelopment())
 {
-    
+
     // I utvecklingsmiljö, fyll databasen med testdata
     app.Services.SeedDatabaseAsync().Wait();
 
@@ -253,13 +248,13 @@ if (!app.Environment.IsDevelopment())
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "MerchStore API V1");
     });
-    
+
     // Kommenterade bort detta  bara
     // I produktion, använd en generisk felsida
-   // app.UseExceptionHandler("/Home/Error");
-    
+    // app.UseExceptionHandler("/Home/Error");
+
     // Aktivera HSTS för säkrare HTTPS-anslutningar
-    //app.UseHsts();
+    app.UseHsts();
 }
 else
 {
