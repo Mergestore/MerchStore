@@ -9,10 +9,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace MerchStore.Infrastructure.Persistence.Migrations
+namespace MerchStore.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250508142602_AdditionalModelChanges")]
+    [Migration("20250508144515_AdditionalModelChanges")]
     partial class AdditionalModelChanges
     {
         /// <inheritdoc />
