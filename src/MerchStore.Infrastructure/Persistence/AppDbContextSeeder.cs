@@ -32,7 +32,7 @@ public class AppDbContextSeeder
         try
         {
             // Säkerställ att databasen är skapad (behövs endast för in-memory databas)
-            // För SQL Server används migreringar istället
+            // För SQL Server används migrations istället
             await _context.Database.EnsureCreatedAsync();
 
             // Lägg till produkter om inga finns
