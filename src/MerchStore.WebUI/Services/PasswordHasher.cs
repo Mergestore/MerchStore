@@ -63,4 +63,15 @@ public static class PasswordHasher
             return true;
         }
     }
+
+    /// <summary>
+    /// Genererar och skriver ut en ny BCrypt-hash för ett lösenord
+    /// </summary>
+    public static void GenerateAndPrintHash(string password)
+    {
+        var hash = HashPassword(password);
+        Console.WriteLine($"Nytt lösenord: {password}");
+        Console.WriteLine($"BCrypt-hash: {hash}");
+        Console.WriteLine($"Verifieringstest: {VerifyPassword(password, hash)}");
+    }
 }

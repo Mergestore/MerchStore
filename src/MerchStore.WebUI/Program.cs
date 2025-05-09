@@ -172,22 +172,22 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var logger = services.GetRequiredService<ILogger<Program>>();
-    
+
     try
     {
         logger.LogInformation("Förbereder databasinitiering...");
         var context = services.GetRequiredService<AppDbContext>();
-        
+
         // Kontrollera anslutningen
         var canConnect = await context.Database.CanConnectAsync();
         logger.LogInformation($"Kan ansluta till databasen: {canConnect}");
-        
+
         if (canConnect)
         {
             // Kör migrationer
             logger.LogInformation("Applicerar migrationer...");
             await context.Database.MigrateAsync();
-            
+
             // Seeda databasen
             logger.LogInformation("Startar seeding...");
             await services.SeedDatabaseAsync();

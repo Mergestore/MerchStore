@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using MerchStore.WebUI.Services;
 
 namespace MerchStore.Controllers;
 
@@ -15,14 +15,14 @@ namespace MerchStore.Controllers;
 public class AccountController : Controller
 {
     private readonly ILogger<AccountController> _logger;
-    private readonly IConfiguration _configuration;
+    private readonly AuthService _authService;
 
     public AccountController(
         ILogger<AccountController> logger,
-        IConfiguration configuration)
+        AuthService authService)
     {
         _logger = logger;
-        _configuration = configuration;
+        _authService = authService;
     }
 
     // Visar inloggningssidan
@@ -45,27 +45,13 @@ public class AccountController : Controller
             return View(model);
         }
 
-        if (IsValidCookieAuthUser(model.Username, model.Password))
+        if (await _authService.AuthenticateUserAsync(model.Username!, model.Password!))
         {
-            var role = model.Username == "admin" ? UserRoles.Administrator : UserRoles.Customer;
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, model.Username!),
-                new Claim(ClaimTypes.Role, role)
-            };
-
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var principal = new ClaimsPrincipal(identity);
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                principal);
-
-            _logger.LogInformation("Användare loggade in med cookie-autentisering.");
+            _logger.LogInformation("Användare loggade in framgångsrikt.");
             return RedirectToLocal(returnUrl);
         }
 
-        ModelState.AddModelError(string.Empty, "Ogiltigt inloggningsförsök.");
+        ModelState.AddModelError(string.Empty, "Ogiltigt användarnamn eller lösenord.");
         return View(model);
     }
 
@@ -86,21 +72,9 @@ public class AccountController : Controller
         return View();
     }
 
-    // Validerar användarnamn och lösenord (endast för utveckling)
-    private bool IsValidCookieAuthUser(string? username, string? password)
-    {
-        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-            return false;
-
-        // För utveckling
-        return (username == "admin" && password == "admin123") ||
-               (username == "john.doe" && password == "password123");
-    }
-
-    // Omdirigerar till returnUrl om den är lokal, annars till startsidan
     private IActionResult RedirectToLocal(string? returnUrl)
     {
-        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+        if (Url.IsLocalUrl(returnUrl))
         {
             return Redirect(returnUrl);
         }
