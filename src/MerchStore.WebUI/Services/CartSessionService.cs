@@ -1,6 +1,7 @@
 using MerchStore.WebUI.Models;
 using System.Text.Json;
 using MerchStore.WebUI.Models.Catalog;
+using System.Globalization;
 
 namespace MerchStore.WebUI.Services;
 
@@ -58,4 +59,16 @@ public class CartSessionService
     {
         SaveCart(new List<ShoppingCartItem>());
     }
+
+    public void UpdateQuantity(Guid productId, int newQuantity)
+    {
+        var cart = GetCart();
+        var item = cart.FirstOrDefault(i => i.ProductId == productId);
+        if (item != null && newQuantity > 0)
+        {
+            item.Quantity = newQuantity;
+            _httpContextAccessor.HttpContext?.Session.SetString(SessionKey, JsonSerializer.Serialize(cart));
+        }
+    }
+
 }
