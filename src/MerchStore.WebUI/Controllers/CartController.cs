@@ -58,5 +58,13 @@ namespace MerchStore.WebUI.Controllers
             _cartService.RemoveFromCart(id);
             return RedirectToAction("Index");
         }
+
+        [HttpPost]
+        public IActionResult UpdateQuantity(Guid id, int quantity)
+        {
+            _cartService.UpdateQuantity(id, quantity);
+            return RedirectToAction("Index");
+        }
+
     }
 }

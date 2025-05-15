@@ -1,45 +1,82 @@
 
 @model List<ShoppingCartItem>
 
-<h2>Your Shopping Cart 🛒</h2>
-
-@if (Model == null || !Model.Any())
-{
-    <p>Your cart is empty.</p>
+@{
+    ViewData["Title"] = "Your Shopping Cart";
 }
-else
-{
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Product</th>
-                <th>Price (SEK)</th>
-                <th>Quantity</th>
-                <th>Total</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.Name</td>
-                    <td>@item.Price.ToString("F2")</td>
-                    <td>@item.Quantity</td>
-                    <td>@(item.Price * item.Quantity)</td>
-                    <td>
-                        <form asp-action="Remove" method="post">
-                            <input type="hidden" name="id" value="@item.ProductId" />
-                            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
 
-    <h4>
-        Total: 
-        @Model.Sum(item => item.Price * item.Quantity).ToString("F2") SEK
-    </h4>
-}
+<h2 class="mb-4">Your Shopping Cart 🛒</h2>
+
+<div class="row">
+    <!-- 🧺 Vänster kolumn: Kundvagn -->
+    <div class="col-md-7">
+        @if (!Model.Any())
+        {
+            <p>Your cart is empty.</p>
+        }
+        else
+        {
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price (SEK)</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Name</td>
+                            <td>@(item.Price.ToString("F2"))</td>
+                            <td>
+                                <form asp-action="UpdateQuantity" method="post" class="d-flex">
+                                    <input type="hidden" name="id" value="@item.ProductId" />
+                                    <input type="number" name="quantity" value="@item.Quantity" min="1" class="form-control form-control-sm me-2" style="width: 60px;" />
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Uppdatera</button>
+                                </form>
+                            </td>
+                            <td>@((item.Price * item.Quantity).ToString("F2"))</td>
+                            <td>
+                                <form asp-action="Remove" method="post">
+                                    <input type="hidden" name="id" value="@item.ProductId" />
+                                    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <h4>Total: @((Model?.Sum(item => item.Price * item.Quantity) ?? 0).ToString("F2")) SEK</h4>
+        }
+    </div>
+
+    <!-- 📦 Höger kolumn: Frakt + Betalning -->
+    <div class="col-md-5">
+        <h3>Fraktuppgifter</h3>
+        <form>
+            <div class="mb-2"><label>Förnamn</label><input type="text" class="form-control" /></div>
+            <div class="mb-2"><label>Efternamn</label><input type="text" class="form-control" /></div>
+            <div class="mb-2"><label>Email</label><input type="email" class="form-control" /></div>
+            <div class="mb-2"><label>Telefonnummer</label><input type="text" class="form-control" /></div>
+            <div class="mb-2"><label>Adress</label><input type="text" class="form-control" /></div>
+            <div class="mb-2"><label>Postnummer</label><input type="text" class="form-control" /></div>
+            <div class="mb-2"><label>Stad</label><input type="text" class="form-control" /></div>
+            <div class="mb-4"><label>Land</label><input type="text" class="form-control" /></div>
+        </form>
+
+        <h3>Betalning</h3>
+        <form>
+            <div class="mb-2"><label>Kortnummer</label><input type="text" class="form-control" /></div>
+            <div class="mb-2"><label>Giltig till</label><input type="text" class="form-control" placeholder="MM/YY" /></div>
+            <div class="mb-2"><label>CVC</label><input type="text" class="form-control" /></div>
+            <div class="mt-3">
+                <button type="submit" class="btn btn-success w-100">Slutför köp</button>
+            </div>
+        </form>
+    </div>
+</div>
