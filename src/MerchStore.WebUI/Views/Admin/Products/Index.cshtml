@@ -1,0 +1,41 @@
+@model IEnumerable<MerchStore.Domain.Entities.Product>
+@{
+    ViewData["Title"] = "Produkter - Admin";
+}
+
+<h1>Produkter</h1>
+<a asp-action="Create" class="btn btn-success mb-3">Lägg till ny produkt</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Namn</th>
+            <th>Pris</th>
+            <th>Lagersaldo</th>
+            <th>Bild</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var product in Model)
+        {
+                <tr>
+                    <td>@product.Name</td>
+                    <td>@product.Price.Amount @product.Price.Currency</td>
+                    <td>@product.StockQuantity</td>
+                    <td>
+                        @if (product.ImageUrl != null)
+                        {
+                                <img src="@product.ImageUrl" alt="@product.Name" style="max-height:50px;" />
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-primary btn-sm">Redigera</a>
+                        <form asp-action="Delete" asp-route-id="@product.Id" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Är du säker på att du vill ta bort produkten?');">Ta bort</button>
+                        </form>
+                    </td>
+                </tr>
+        }
+    </tbody>
+</table> 

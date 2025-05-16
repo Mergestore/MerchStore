@@ -28,6 +28,10 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("ApiKeyPolicy", policy =>
         policy.AddAuthenticationSchemes(ApiKeyAuthenticationDefaults.AuthenticationScheme)
             .RequireAuthenticatedUser());
+
+    // Lägg till AdminOnly-policy som kräver Admin-rollen
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireRole("Admin"));
 });
 
 // Lägg till MVC-stöd med Controllers och Views
@@ -208,7 +212,7 @@ using (var scope = app.Services.CreateScope())
 if (!app.Environment.IsDevelopment())
 {
 
-    // I utvecklingsmiljö, fyll databasen med testdata
+    // Fyll databasen med data
     app.Services.SeedDatabaseAsync().Wait();
 
     // Aktivera Swagger UI för API-testning i utvecklingsmiljö
@@ -218,8 +222,6 @@ if (!app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "MerchStore API V1");
     });
 
-    // Kommenterade bort detta  bara
-    // I produktion, använd en generisk felsida
     // app.UseExceptionHandler("/Home/Error");
 
     // Aktivera HSTS för säkrare HTTPS-anslutningar

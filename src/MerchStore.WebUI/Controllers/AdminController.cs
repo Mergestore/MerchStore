@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MerchStore.WebUI.Controllers;
 
-[Authorize(Policy = "AdminOnly")]
+[Authorize(Roles = "Admin")]
 public class AdminController : Controller
 {
     public IActionResult Dashboard()
@@ -16,5 +16,17 @@ public class AdminController : Controller
         // In a real application, this would fetch from a database
         var users = new List<string> { "admin", "john.doe" };
         return View(users);
+    }
+
+    public IActionResult Orders()
+    {
+        // Placeholder for order management
+        return View();
+    }
+
+    public IActionResult Statistics()
+    {
+        // Placeholder for statistics dashboard
+        return View();
     }
 }
