@@ -32,7 +32,6 @@ public class ProductFormViewModel
     [Range(1, 50000, ErrorMessage = "Lagersaldo måste vara mellan {1} och {2}.")]
     public int StockQuantity { get; set; }
 
-    [Required]
     [Display(Name = "Produktbild")]
     public IFormFile? ImageFile { get; set; }
 
