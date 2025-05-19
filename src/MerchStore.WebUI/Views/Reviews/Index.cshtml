@@ -1,0 +1,77 @@
+@model MerchStore.WebUI.Models.ProductReviewsViewModel
+
+@{
+    ViewData["Title"] = "Product Reviews";
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">Product Reviews</h1>
+
+    @if (!Model.Products.Any())
+    {
+        <div class="alert alert-info">
+            No products available.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var product in Model.Products)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        @if (product.ImageUrl != null)
+                        {
+                            <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" style="height: 200px; object-fit: cover;">
+                        }
+                        else
+                        {
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <span class="text-muted">No image</span>
+                            </div>
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title">@product.Name</h5>
+                            <p class="card-text">@(product.Description.Length > 100 ? product.Description.Substring(0, 100) + "..." : product.Description)</p>
+
+                            @if (Model.ReviewCounts.TryGetValue(product.Id, out var count) && count > 0)
+                            {
+                                <div class="mb-2">
+                                    @if (Model.AverageRatings.TryGetValue(product.Id, out var rating))
+                                    {
+                                        <div class="mb-1">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                if (i <= Math.Floor(rating))
+                                                {
+                                                    <i class="bi bi-star-fill text-warning"></i>
+                                                }
+                                                else if (i <= Math.Ceiling(rating) && i > Math.Floor(rating))
+                                                {
+                                                    <i class="bi bi-star-half text-warning"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-star text-warning"></i>
+                                                }
+                                            }
+                                            <span class="ms-1">@rating.ToString("F1")</span>
+                                        </div>
+                                        <small class="text-muted">@count @(count == 1 ? "review" : "reviews")</small>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted mb-2">No reviews yet</p>
+                            }
+                        </div>
+                        <div class="card-footer bg-white">
+                            <a asp-action="Product" asp-route-id="@product.Id" class="btn btn-outline-primary">View Reviews</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
