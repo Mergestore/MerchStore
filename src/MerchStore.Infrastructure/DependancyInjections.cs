@@ -6,6 +6,10 @@ using MerchStore.Domain.Interfaces;
 using MerchStore.Infrastructure.Persistence;
 using MerchStore.Infrastructure.Persistence.Repositories;
 
+// 👇 behövs för att registrera externa API-tjänster
+using MerchStore.Infrastructure.ExternalServices.Reviews;
+using MerchStore.Infrastructure.ExternalServices.Reviews.Configurations;
+
 namespace MerchStore.Infrastructure;
 
 /// <summary>
@@ -29,7 +33,7 @@ public static class DependencyInjection
     /// <returns>Tjänstsamlingen för kedjning</returns>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // Hämta anslutningssträngen från konfigurationen
+        // Hämta anslutningssträngen från konfigurationen, SQL Server konfiguration
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
         // Konfigurera SQL Server som databas
@@ -55,6 +59,15 @@ public static class DependencyInjection
 
         // Registrera databasseedning för att fylla databasen med initial data
         services.AddScoped<AppDbContextSeeder>();
+
+        
+        // ✨ Review API-tjänster
+        services.Configure<ReviewApiOptions>(configuration.GetSection(ReviewApiOptions.SectionName));
+        services.AddHttpClient<ReviewApiClient>()
+            .SetHandlerLifetime(TimeSpan.FromMinutes(5)); // för återanvändning
+
+        services.AddSingleton<MockReviewService>(); // används som fallback
+        services.AddScoped<IReviewRepository, ExternalReviewRepository>(); // Repository med Circuit Breaker
 
         return services;
     }
