@@ -1,2 +1,2 @@
 # MerchStore
-1
+1 .
