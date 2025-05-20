@@ -5,8 +5,7 @@ using MerchStore.Application.Common.Interfaces;
 using MerchStore.Domain.Interfaces;
 using MerchStore.Infrastructure.Persistence;
 using MerchStore.Infrastructure.Persistence.Repositories;
-
-// 👇 behövs för att registrera externa API-tjänster
+// För externa API-tjänster
 using MerchStore.Infrastructure.ExternalServices.Reviews;
 using MerchStore.Infrastructure.ExternalServices.Reviews.Configurations;
 
@@ -27,13 +26,14 @@ public static class DependencyInjection
     /// - Repository Manager för att hantera repositories
     /// - Loggning
     /// - Databasseedning
+    /// - Externa API-tjänster
     /// </summary>
     /// <param name="services">Tjänstsamlingen att lägga till tjänster i</param>
     /// <param name="configuration">Konfigurationen för databasanslutningssträngar</param>
     /// <returns>Tjänstsamlingen för kedjning</returns>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // Hämta anslutningssträngen från konfigurationen, SQL Server konfiguration
+        // Hämta anslutningssträngen från konfigurationen
         var connectionString = configuration.GetConnectionString("DefaultConnection");
 
         // Konfigurera SQL Server som databas
@@ -59,9 +59,8 @@ public static class DependencyInjection
 
         // Registrera databasseedning för att fylla databasen med initial data
         services.AddScoped<AppDbContextSeeder>();
-
         
-        // ✨ Review API-tjänster
+        // Registrera recensionstjänster från externa API:er
         services.Configure<ReviewApiOptions>(configuration.GetSection(ReviewApiOptions.SectionName));
         services.AddHttpClient<ReviewApiClient>()
             .SetHandlerLifetime(TimeSpan.FromMinutes(5)); // för återanvändning
@@ -80,6 +79,22 @@ public static class DependencyInjection
     /// <param name="serviceProvider">Service provider för att lösa beroenden</param>
     /// <returns>En task som representerar den asynkrona operationen</returns>
     public static async Task SeedDatabaseAsync(this IServiceProvider serviceProvider)
+    {
+        // Skapa en ny scope för att hantera beroenden
+        using var scope = serviceProvider.CreateScope();
+        // Hämta seedern från DI-containern
+        var seeder = scope.ServiceProvider.GetRequiredService<AppDbContextSeeder>();
+        // Kör seedningen
+        await seeder.SeedAsync();
+    }
+
+    /// <summary>
+    /// Fyller databasen med roller och användare.
+    /// Detta är en tilläggsmetod på IServiceProvider som kan anropas från Program.cs.
+    /// </summary>
+    /// <param name="serviceProvider">Service provider för att lösa beroenden</param>
+    /// <returns>En task som representerar den asynkrona operationen</returns>
+    public static async Task SeedRolesAndUsersAsync(this IServiceProvider serviceProvider)
     {
         // Skapa en ny scope för att hantera beroenden
         using var scope = serviceProvider.CreateScope();

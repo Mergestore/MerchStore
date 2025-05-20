@@ -1,36 +1,37 @@
 using Microsoft.EntityFrameworkCore;
 using MerchStore.Domain.Entities;
+using MerchStore.Infrastructure.Models.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace MerchStore.Infrastructure.Persistence;
 
 /// <summary>
-/// The database context that provides access to the database through Entity Framework Core.
-/// This is the central class in EF Core and serves as the primary point of interaction with the database.
+/// Databaskontexten som ger tillgång till databasen genom Entity Framework Core.
+/// Detta är den centrala klassen i EF Core och fungerar som den primära interaktionspunkten med databasen.
 /// </summary>
-public class AppDbContext : IdentityDbContext<IdentityUser>
+public class AppDbContext : IdentityDbContext<ApplicationUser>
 {
     /// <summary>
-    /// DbSet represents a collection of entities of a specific type in the database.
-    /// Each DbSet typically corresponds to a database table.
+    /// DbSet representerar en samling entiteter av en specifik typ i databasen.
+    /// Varje DbSet motsvarar vanligtvis en databastabell.
     /// </summary>
     public DbSet<Product> Products { get; set; }
 
     /// <summary>
-    /// Constructor that accepts DbContextOptions, which allows for configuration to be passed in.
-    /// This enables different database providers (SQL Server, In-Memory, etc.) to be used with the same context.
+    /// Konstruktor som accepterar DbContextOptions, vilket möjliggör konfiguration att skickas in.
+    /// Detta gör att olika databasleverantörer (SQL Server, In-Memory, etc.) kan användas med samma kontext.
     /// </summary>
-    /// <param name="options">The options to be used by the DbContext</param>
+    /// <param name="options">Inställningarna som ska användas av DbContext</param>
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
 
     /// <summary>
-    /// This method is called when the model for a derived context is being created.
-    /// It allows for configuration of entities, relationships, and other model-building activities.
+    /// Denna metod anropas när modellen för en härledd kontext skapas.
+    /// Den möjliggör konfiguration av entiteter, relationer och andra modellbyggande aktiviteter.
     /// </summary>
-    /// <param name="modelBuilder">Provides a simple API for configuring the model</param>
+    /// <param name="modelBuilder">Tillhandahåller ett enkelt API för att konfigurera modellen</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
