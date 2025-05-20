@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MerchStore.WebUI.Models;
 using Microsoft.AspNetCore.Authorization;
 
+
 namespace MerchStore.WebUI.Controllers;
 
 public class HomeController : Controller
