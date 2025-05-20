@@ -6,6 +6,11 @@ namespace MerchStore.Infrastructure.Persistence;
 
 /// <summary>
 /// Används av EF Core för att skapa databaskontext vid design-time (t.ex. vid migreringar)
+/// 
+/// Denna klass är nödvändig för att:
+/// - Köra migrations-kommandon från kommandoraden (add-migration, update-database)
+/// - Generera databastabeller och relationer baserat på modellerna
+/// - Ladda konfiguration från rätt appsettings.json när migreringar körs
 /// </summary>
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 {

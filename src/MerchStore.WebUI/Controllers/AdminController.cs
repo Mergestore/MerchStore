@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MerchStore.Domain.Constants;
 
 namespace MerchStore.WebUI.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = UserRoles.Administrator)]
 public class AdminController : Controller
 {
     public IActionResult Dashboard()

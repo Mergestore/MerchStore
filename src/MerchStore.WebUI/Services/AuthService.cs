@@ -69,9 +69,16 @@ public class AuthService
                 // Skapa autentiseringsproperties för cookies
                 var authProperties = new AuthenticationProperties
                 {
-                    IsPersistent = true, // Gör cookien persistent för "Remember me"
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7), // Håll inloggad i 7 dagar
-                    AllowRefresh = true // Tillåt automatisk förnyelse av cookie
+                    // Gör cookien persistent så att användaren förblir inloggad även efter att webbläsaren stängs.
+                    // Ökar bekvämligheten men kan medföra säkerhetsrisker på delade datorer.
+                    IsPersistent = true,
+
+                    // Håll inloggad i 7 dagar, avvägning mellan säkerhet och användarvänlighet.
+                    // Längre tid är bekvämare för användaren men ökar risken vid stulna credentials.
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7),
+
+                    // Tillåt automatisk förnyelse av cookie vilket förlänger sessionen vid aktiv användning
+                    AllowRefresh = true
                 };
 
                 // Logga in användaren

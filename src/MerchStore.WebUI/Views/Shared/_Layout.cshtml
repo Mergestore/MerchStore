@@ -46,7 +46,19 @@
                                 asp-action="Index">Products</a>
                         </li>
 
-                        @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
+                        @* 
+                        Användarhantering - Rollbaserad åtkomstkontroll:
+                        ----------------------------------------------
+                        1. Kontrollera om användaren är inloggad med User.Identity?.IsAuthenticated
+                        2. Kontrollera om användaren har Admin rollen med User.IsInRole()
+                        3. Visa Admin-panelen endast för användare med Admin roll
+                        
+                        Ett exempel på rollbaserad åtkomstkontroll i vyer. I controllers används
+                        istället attributet [Authorize(Roles = "Admin")] för att förhindra 
+                        åtkomst helt för obehöriga användare.
+                        *@
+                        @if (User.Identity?.IsAuthenticated == true &&
+                                                User.IsInRole(MerchStore.Domain.Constants.UserRoles.Administrator))
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-danger-emphasis fw-bold" asp-area="" asp-controller="Admin"

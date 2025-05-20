@@ -2,6 +2,8 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using MerchStore.WebUI.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using MerchStore.Infrastructure.Models.Auth;
 
 namespace MerchStore.WebUI.Controllers;
 
@@ -45,5 +47,21 @@ public class HomeController : Controller
         };
 
         return View(viewModel);
+    }
+
+    // Enkel åtgärd för att visa användarens rollinfo
+    [Authorize]
+    public IActionResult ShowRoles()
+    {
+        var roles = User.Claims
+            .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
+            .Select(c => c.Value)
+            .ToList();
+
+        ViewBag.Roles = roles;
+        ViewBag.UserName = User.Identity?.Name;
+        ViewBag.IsInAdminRole = User.IsInRole(MerchStore.Domain.Constants.UserRoles.Administrator);
+
+        return View();
     }
 }

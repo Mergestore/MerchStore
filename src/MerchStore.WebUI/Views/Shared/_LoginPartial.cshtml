@@ -1,24 +1,52 @@
-@using Microsoft.AspNetCore.Authentication.Cookies
+@using MerchStore.Infrastructure.Models.Auth
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+@*
+Användarhantering - Inloggningspartiell vy:
+-------------------------------------------
+Denna vy visar olika navigation beroende på om användaren är inloggad eller inte.
+
+Viktiga komponenter:
+1. SignInManager: Hanterar inloggningsstatus och session
+   - SignInManager.IsSignedIn(User): Kontrollerar om användaren är inloggad
+
+2. UserManager: Hanterar användardata och operationer
+   - UserManager.GetUserAsync(User): Hämtar användarobjektet för inloggad användare
+   - Ger åtkomst till användarens data som namn, e-post, etc.
+
+3. Inloggad användare:
+   - Visar användarens namn med FirstName från ApplicationUser
+   - Visar utloggningsfunktion (skickar POST till Account/Logout)
+   - AntiForgeryToken skyddar mot CSRF-attacker
+
+4. Ej inloggad användare:
+   - Visar länkar för registrering och inloggning
+*@
 
 <ul class="navbar-nav ms-auto">
-    @if (User.Identity?.IsAuthenticated == true)
+    @if (SignInManager.IsSignedIn(User))
     {
         <li class="nav-item d-flex align-items-center">
             <span class="navbar-text text-dark me-3">
-                Hello @User.Identity.Name!
+                Hej @UserManager.GetUserAsync(User).Result?.FirstName!
             </span>
         </li>
         <li class="nav-item">
             <form class="form-inline" asp-controller="Account" asp-action="Logout" method="post">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-primary">Logout</button>
+                <button type="submit" class="btn btn-primary">Logga ut</button>
             </form>
         </li>
     }
     else
     {
         <li class="nav-item">
-            <a class="nav-link" asp-controller="Account" asp-action="Login">Login</a>
+            <a class="nav-link text-dark" asp-controller="Account" asp-action="Register">Registrera</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Logga in</a>
         </li>
     }
 </ul>

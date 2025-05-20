@@ -1,7 +1,7 @@
 @model MerchStore.WebUI.Models.Auth.LoginViewModel
 
 @{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = "Logga in";
 }
 
 <div class="row justify-content-center">
@@ -27,16 +27,13 @@
                     </div>
 
                     <div>
-                        <button type="submit" class="btn btn-primary w-100">Log in</button>
+                        <button type="submit" class="btn btn-primary w-100">Logga in</button>
                     </div>
                 </form>
             </div>
-            <div class="card-footer text-muted text-center">
-                <small>
-                    <i class="bi bi-info-circle"></i> Test Credentials:<br>
-                    Admin: admin / admin123<br>
-                    Customer: john.doe / password123
-                </small>
+            <div class="card-footer text-center">
+                <p>Admin-inlogg: admin/Admin123!</p>
+                <p>Har du inget konto? <a asp-action="Register">Registrera dig här</a></p>
             </div>
         </div>
     </div>

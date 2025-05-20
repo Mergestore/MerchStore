@@ -25,7 +25,7 @@ public class DirectAuthService
     public async Task<bool> AuthenticateUserAsync(string username, string password)
     {
         _logger.LogWarning("Använder DirectAuthService - ENDAST FÖR UTVECKLING!");
-        
+
         // Extremt förenklad autentisering för utveckling
         if (username == "admin" && password == "admin")
         {
@@ -34,18 +34,18 @@ public class DirectAuthService
                 new Claim(ClaimTypes.Name, username),
                 new Claim(ClaimTypes.Role, "Admin")
             };
-            
+
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);
-            
+
             await _httpContextAccessor.HttpContext!.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme, 
+                CookieAuthenticationDefaults.AuthenticationScheme,
                 principal);
-            
+
             _logger.LogInformation("Admin-användare loggades in via direktautentisering");
             return true;
         }
-        
+
         _logger.LogInformation("Direktautentisering misslyckades för användare: {Username}", username);
         return false;
     }

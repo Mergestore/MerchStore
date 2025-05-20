@@ -1,9 +1,13 @@
+using MerchStore.Domain.Constants;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MerchStore.Domain.Entities;
 using MerchStore.Domain.ValueObjects;
+using MerchStore.Infrastructure.Models.Auth;
+using Microsoft.AspNetCore.Identity;
 
 namespace MerchStore.Infrastructure.Persistence;
+
 
 /// <summary>
 /// Används för att fylla databasen med initial data för utveckling, testning och demo
@@ -12,16 +16,23 @@ public class AppDbContextSeeder
 {
     private readonly ILogger<AppDbContextSeeder> _logger;
     private readonly AppDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
 
     /// <summary>
-    /// Constructor that accepts the context and a logger
+    /// Konstruktor som accepterar kontexten och en logger
     /// </summary>
-    /// <param name="context">The database context to seed</param>
-    /// <param name="logger">The logger for logging seed operations</param>
-    public AppDbContextSeeder(AppDbContext context, ILogger<AppDbContextSeeder> logger)
+    /// <param name="context">Databaskontexten som ska seedas</param>
+    /// <param name="logger">Loggern för att logga seedningsoperationer</param>
+    public AppDbContextSeeder(AppDbContext context,
+        ILogger<AppDbContextSeeder> logger,
+        UserManager<ApplicationUser> userManager,
+        RoleManager<IdentityRole> roleManager)
     {
         _context = context;
         _logger = logger;
+        _userManager = userManager;
+        _roleManager = roleManager;
     }
 
     /// <summary>
@@ -40,7 +51,17 @@ public class AppDbContextSeeder
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Ett fel uppstod vid seedning av databasen.");
+            _logger.LogError(ex, "Ett fel uppstod vid seedning av databasen eller rollerna.");
+            throw;
+        }
+        try
+        {
+            // Seeda roller och användare
+            await SeedRolesAndUsersAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ett fel uppstod vid seedning av roller och användare.");
             throw;
         }
     }
@@ -131,6 +152,75 @@ public class AppDbContextSeeder
         else
         {
             _logger.LogInformation("Databasen innehåller redan produkter. Hoppar över produktseedning.");
+        }
+    }
+
+    private async Task SeedRolesAndUsersAsync()
+    {
+        // Skapa roller om de inte redan finns
+        if (!await _roleManager.RoleExistsAsync(UserRoles.Administrator))
+        {
+            await _roleManager.CreateAsync(new IdentityRole(UserRoles.Administrator));
+            _logger.LogInformation("Skapade Admin-rollen");
+        }
+
+        if (!await _roleManager.RoleExistsAsync(UserRoles.Customer))
+        {
+            await _roleManager.CreateAsync(new IdentityRole(UserRoles.Customer));
+            _logger.LogInformation("Skapade Customer-rollen");
+        }
+
+        // skapa admin användare om den inte redan finns
+        var adminUser = await _userManager.FindByNameAsync("admin");
+        if (adminUser == null)
+        {
+            var newAdminUser = new ApplicationUser
+            {
+                UserName = "admin",
+                Email = "admin@merchstore.example.com",
+                EmailConfirmed = true,
+                FirstName = "Admin",
+                LastName = "Admin"
+            };
+
+            var result = await _userManager.CreateAsync(newAdminUser, "Admin123!");
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(newAdminUser, UserRoles.Administrator);
+                _logger.LogInformation("Skapade admin-användare och tilldelade Admin-rollen");
+            }
+            else
+            {
+                _logger.LogError("Kunde inte skapa admin-användaren: {Errors}",
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
+        }
+
+        // Skapa en testanvändare om den inte redan finns
+        var testUser = await _userManager.FindByNameAsync("testuser");
+        if (testUser == null)
+        {
+            var newTestUser = new ApplicationUser
+            {
+                UserName = "testuser",
+                Email = "test@example.com",
+                EmailConfirmed = true,
+                FirstName = "Test",
+                LastName = "User"
+            };
+
+            var result = await _userManager.CreateAsync(newTestUser, "Test123!");
+            if (result.Succeeded)
+            {
+                // Tilldela rollen till testanvändaren
+                await _userManager.AddToRoleAsync(newTestUser, UserRoles.Customer);
+                _logger.LogInformation("Skapade testanvändare och tilldelade Customer-rollen");
+            }
+            else
+            {
+                _logger.LogError("Kunde inte skapa testanvändaren: {Errors}",
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+            }
         }
     }
 }
