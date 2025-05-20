@@ -1,4 +1,4 @@
-using MerchStore.Application.Services;
+
 using Microsoft.Extensions.DependencyInjection;
 using MerchStore.Application.Services.Implementations;
 using MerchStore.Application.Services.Interfaces;
@@ -19,6 +19,8 @@ public static class DependencyInjection
     {
         // Register application services
         services.AddScoped<ICatalogService, CatalogService>();
+        services.AddScoped<IReviewService, ReviewService>();
+
 
         return services;
     }

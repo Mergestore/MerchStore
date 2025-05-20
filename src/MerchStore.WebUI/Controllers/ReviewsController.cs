@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using MerchStore.Application.Services.Interfaces;
 using MerchStore.WebUI.Models;
 
+
+
 namespace MerchStore.WebUI.Controllers;
 
 /// <summary>
@@ -51,7 +53,7 @@ public class ReviewsController : Controller
         try
         {
             var product = await _catalogService.GetProductByIdAsync(id);
-            if (product == null) return NotFound();
+            if (product is null) return NotFound();
 
             var reviews = await _reviewService.GetReviewsByProductIdAsync(id);
             var averageRating = await _reviewService.GetAverageRatingForProductAsync(id);

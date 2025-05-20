@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using MerchStore.Infrastructure.Models.Auth;
 
+
 namespace MerchStore.WebUI.Controllers;
 
 public class HomeController : Controller
