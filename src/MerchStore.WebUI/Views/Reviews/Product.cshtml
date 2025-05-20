@@ -1,0 +1,116 @@
+@model MerchStore.WebUI.Models.ProductReviewViewModel
+
+@{
+    ViewData["Title"] = $"Reviews for {Model.Product.Name}";
+}
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Reviews" asp-action="Index">Reviews</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Product.Name</li>
+        </ol>
+    </nav>
+
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                @if (Model.Product.ImageUrl != null)
+                {
+                    <img src="@Model.Product.ImageUrl" class="card-img-top" alt="@Model.Product.Name">
+                }
+                else
+                {
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <span class="text-muted">No image</span>
+                    </div>
+                }
+                <div class="card-body">
+                    <h5 class="card-title">@Model.Product.Name</h5>
+                    <p class="card-text">@Model.Product.Description</p>
+                    <p class="card-text"><strong>Price:</strong> @Model.Product.Price</p>
+                    <p class="card-text">
+                        <strong>Stock:</strong>
+                        @if (Model.Product.StockQuantity > 0)
+                        {
+                            <span class="text-success">In Stock (@Model.Product.StockQuantity)</span>
+                        }
+                        else
+                        {
+                            <span class="text-danger">Out of Stock</span>
+                        }
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <h2>Reviews</h2>
+
+            <div class="mb-4">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <h1 class="display-4 mb-0">@Model.AverageRating.ToString("F1")</h1>
+                        <div>
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= Math.Floor(Model.AverageRating))
+                                {
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                }
+                                else if (i <= Math.Ceiling(Model.AverageRating) && i > Math.Floor(Model.AverageRating))
+                                {
+                                    <i class="bi bi-star-half text-warning"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-star text-warning"></i>
+                                }
+                            }
+                        </div>
+                    </div>
+                    <div>
+                        <p class="mb-0">@Model.ReviewCount @(Model.ReviewCount == 1 ? "review" : "reviews")</p>
+                    </div>
+                </div>
+            </div>
+
+            @if (!Model.Reviews.Any())
+            {
+                <div class="alert alert-info">
+                    No reviews yet. Be the first to review this product!
+                </div>
+            }
+            else
+            {
+                @foreach (var review in Model.Reviews)
+                {
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="card-title mb-0">@review.Title</h5>
+                                <small class="text-muted">@review.CreatedAt.ToString("MMM dd, yyyy")</small>
+                            </div>
+                            <div class="mb-2">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= review.Rating)
+                                    {
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-star text-warning"></i>
+                                    }
+                                }
+                            </div>
+                            <p class="card-text">@review.Content</p>
+                            <p class="card-text"><small class="text-muted">By @review.CustomerName</small></p>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
