@@ -1,8 +1,25 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "MerchStore - Din butik för träningsprodukter";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<style>
+    /* Hero-sektion styling */
+    .hero-section {
+        background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('https://blobmerchstore2204.blob.core.windows.net/imagerepository/Screenshot 2025-05-21 at 17.04.53.png');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 200px 0;
+        margin-bottom: 60px;
+        border-radius: 8px;
+    }
+</style>
+
+<!-- Hero-sektion -->
+<section class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-4">Välkommen till MerchStore</h1>
+        <p class="lead mb-5">Din butik för träningsprodukter och sportkläder</p>
+        <a asp-controller="Catalog" asp-action="Index" class="btn btn-primary btn-lg px-5 py-3">Utforska produkter</a>
+    </div>
+</section>
