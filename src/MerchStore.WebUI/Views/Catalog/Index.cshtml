@@ -24,7 +24,7 @@
 
 <div class="text-center">
     <h1 class="display-4 mb-4">Product Catalog</h1>
-    <p class="lead mb-5">Browse our awesome merchandise below!</p>
+    <p class="lead mb-5">Se våra produkter nedanför!</p>
 </div>
 
 @if (Model.FeaturedProducts.Any())
@@ -74,14 +74,14 @@
                         <div>
                             @if (product.InStock)
                             {
-                                <span class="badge bg-success me-2">In Stock</span>
+                                <span class="badge bg-success me-2">I Lager</span>
                             }
                             else
                             {
-                                <span class="badge bg-danger me-2">Out of Stock</span>
+                                <span class="badge bg-danger me-2">Slut I Lager</span>
                             }
                             <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-outline-primary btn-sm">
-                                View Details
+                                Se Detaljer
                             </a>
                         </div>
                     </div>
