@@ -64,7 +64,7 @@
             <div class="mb-3 mt-2">
                 <label for="quantity" class="form-label">Antal:</label>
                 <input type="number" id="quantity" name="quantity" class="form-control" value="1" min="1"
-                    max="@Model.StockQuantity" style="width: 120px;" />
+                       max="@Model.StockQuantity" style="width: 120px;" />
             </div>
 
             <button type="submit" class="btn btn-primary">
@@ -76,5 +76,31 @@
             </div>
 
         </form>
+        <div class="mt-4">
+            <h5>Kundrecensioner</h5>
+            <div class="d-flex align-items-center mb-2">
+                <div class="me-2">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        if (i <= Math.Floor(ViewBag.AverageRating ?? 0))
+                        {
+                            <i class="bi bi-star-fill text-warning"></i>
+                        }
+                        else if (i <= Math.Ceiling(ViewBag.AverageRating ?? 0) && i > Math.Floor(ViewBag.AverageRating ?? 0))
+                        {
+                            <i class="bi bi-star-half text-warning"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-star text-warning"></i>
+                        }
+                    }
+                </div>
+                <span>@((ViewBag.AverageRating ?? 0).ToString("F1")) från @(ViewBag.ReviewCount ?? 0) omdömen</span>
+            </div>
+            <a asp-controller="Reviews" asp-action="Product" asp-route-id="@Model.Id" class="btn btn-outline-secondary">
+                Visa alla recensioner
+            </a>
+        </div>
     </div>
 </div>

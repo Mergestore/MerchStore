@@ -1,4 +1,3 @@
-using MerchStore.Application.Services;
 using MerchStore.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using MerchStore.WebUI.Models.Catalog;
@@ -8,10 +7,12 @@ namespace MerchStore.WebUI.Controllers;
 public class CatalogController : Controller
 {
     private readonly ICatalogService _catalogService;
+    private readonly IReviewService _reviewService; // Lägg till referensen
 
-    public CatalogController(ICatalogService catalogService)
+    public CatalogController(ICatalogService catalogService, IReviewService reviewService) // Uppdatera konstruktorn
     {
         _catalogService = catalogService;
+        _reviewService = reviewService; // Tilldela tjänsten
     }
 
     // GET: Catalog
@@ -69,6 +70,20 @@ public class CatalogController : Controller
                 return NotFound();
             }
 
+            // Hämta recensionsdata - omslut med try/catch för att hantera eventuella fel
+            try
+            {
+                ViewBag.AverageRating = await _reviewService.GetAverageRatingForProductAsync(id);
+                ViewBag.ReviewCount = await _reviewService.GetReviewCountForProductAsync(id);
+            }
+            catch (Exception reviewEx)
+            {
+                // Logga felet men fortsätt - visa produkten ändå
+                Console.WriteLine($"Error fetching reviews: {reviewEx.Message}");
+                ViewBag.AverageRating = 0;
+                ViewBag.ReviewCount = 0;
+            }
+
             // Map domain entity to view model
             var viewModel = new ProductDetailsViewModel
             {
@@ -92,7 +107,5 @@ public class CatalogController : Controller
             ViewBag.ErrorMessage = "An error occurred while loading the product. Please try again later.";
             return View("Error");
         }
-
-        
     }
 }

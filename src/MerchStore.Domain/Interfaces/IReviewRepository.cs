@@ -16,5 +16,8 @@ public interface IReviewRepository
     /// <returns>
     /// En tuple med alla recensioner samt ett ReviewStats-objekt med snittbetyg och antal.
     /// </returns>
-    Task<(IEnumerable<Review> Reviews, ReviewStats Stats)> GetProductReviewsAsync(Guid productId);
+  //  Task<(IEnumerable<Review> Reviews, ReviewStats Stats)> GetProductReviewsAsync(Guid productId);
+    
+    Task<(IEnumerable<Review> Reviews, ReviewStats Stats)> GetProductReviewsAsync(
+        Guid productId, int limit = 10, int offset = 0);
 }

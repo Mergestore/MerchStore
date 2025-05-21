@@ -7,7 +7,6 @@ using MerchStore.Infrastructure.Persistence;
 using MerchStore.Infrastructure.Persistence.Repositories;
 // För externa API-tjänster
 using MerchStore.Infrastructure.ExternalServices.Reviews;
-using MerchStore.Infrastructure.ExternalServices.Reviews.Configurations;
 
 namespace MerchStore.Infrastructure;
 
@@ -64,6 +63,7 @@ public static class DependencyInjection
         services.Configure<ReviewApiOptions>(configuration.GetSection(ReviewApiOptions.SectionName));
         services.AddHttpClient<ReviewApiClient>()
             .SetHandlerLifetime(TimeSpan.FromMinutes(5)); // för återanvändning
+
 
         services.AddSingleton<MockReviewService>(); // används som fallback
         services.AddScoped<IReviewRepository, ExternalReviewRepository>(); // Repository med Circuit Breaker

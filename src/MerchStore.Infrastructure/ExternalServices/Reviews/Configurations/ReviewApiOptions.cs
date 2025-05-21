@@ -1,4 +1,4 @@
-namespace MerchStore.Infrastructure.ExternalServices.Reviews.Configurations;
+// src/MerchStore.Infrastructure/ExternalServices/Reviews/Configurations/ReviewApiOptions.cs
 
 public class ReviewApiOptions
 {
@@ -6,7 +6,7 @@ public class ReviewApiOptions
 
     public string BaseUrl { get; set; } = string.Empty;
     public string ApiKey { get; set; } = string.Empty;
-    public string ApiKeyHeaderName { get; set; } = "x-functions-key";
+    public string ApiKeyHeaderName { get; set; } = "X-API-KEY";
     public int TimeoutSeconds { get; set; } = 30;
 
     // Circuit breaker settings

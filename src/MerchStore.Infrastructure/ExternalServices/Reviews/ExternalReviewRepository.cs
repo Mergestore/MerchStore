@@ -1,8 +1,8 @@
+// src/MerchStore.Infrastructure/ExternalServices/Reviews/ExternalReviewRepository.cs
 using MerchStore.Domain.Entities;
 using MerchStore.Domain.Enums;
 using MerchStore.Domain.Interfaces;
 using MerchStore.Domain.ValueObjects;
-using MerchStore.Infrastructure.ExternalServices.Reviews.Configurations;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
@@ -56,14 +56,15 @@ public class ExternalReviewRepository : IReviewRepository
                 });
     }
 
-    public async Task<(IEnumerable<Review> Reviews, ReviewStats Stats)> GetProductReviewsAsync(Guid productId)
+    public async Task<(IEnumerable<Review> Reviews, ReviewStats Stats)> GetProductReviewsAsync(Guid productId, int limit = 10, int offset = 0)
     {
         try
         {
             // 🧠 Kör anropet genom circuit breaker-skyddet
             return await _circuitBreakerPolicy.ExecuteAsync(async () =>
             {
-                var response = await _apiClient.GetProductReviewsAsync(productId);
+                // Anropa den nya metoden för grupprecensioner
+                var response = await _apiClient.GetGroupReviewsAsync(productId);
 
                 // Kontrollera om vi fått komplett data
                 if (response?.Reviews == null || response.Stats == null)
@@ -74,7 +75,7 @@ public class ExternalReviewRepository : IReviewRepository
                 // Mappa från DTO till riktiga domänobjekt
                 var reviews = response.Reviews.Select(r => new Review(
                     Guid.Parse(r.Id ?? Guid.NewGuid().ToString()),
-                    Guid.Parse(r.ProductId ?? productId.ToString()),
+                    productId, // Vi använder det ursprungliga produkt-ID:t här, inte grupp-ID:t
                     r.CustomerName ?? "Unknown",
                     r.Title ?? "No Title",
                     r.Content ?? "No Content",
@@ -84,7 +85,7 @@ public class ExternalReviewRepository : IReviewRepository
                 )).ToList();
 
                 var stats = new ReviewStats(
-                    productId,
+                    productId, // Ursprungligt produkt-ID
                     response.Stats.AverageRating,
                     response.Stats.ReviewCount
                 );
@@ -116,4 +117,5 @@ public class ExternalReviewRepository : IReviewRepository
             _ => ReviewStatus.Pending
         };
     }
+
 }

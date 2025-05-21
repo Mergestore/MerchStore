@@ -1,8 +1,9 @@
-namespace MerchStore.Infrastructure.ExternalServices.Reviews.Models;
-
-public class ReviewStatsDto
+namespace MerchStore.Infrastructure.ExternalServices.Reviews.Models
 {
-    public string? ProductId { get; set; }
-    public double AverageRating { get; set; }
-    public int ReviewCount { get; set; }
+    public class ReviewStatsDto
+    {
+        public string? GroupId { get; set; }
+        public double AverageRating { get; set; }
+        public int ReviewCount { get; set; }
+    }
 }

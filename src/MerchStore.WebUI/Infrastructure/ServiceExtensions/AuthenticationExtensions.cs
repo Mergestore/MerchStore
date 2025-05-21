@@ -72,10 +72,10 @@ public static class AuthenticationExtensions
             {
                 // Lösenordsinställningar
                 options.Password.RequireDigit = true;
-                options.Password.RequiredLength = 8;
-                options.Password.RequireNonAlphanumeric = true;
-                options.Password.RequireUppercase = true;
-                options.Password.RequireLowercase = true;
+                options.Password.RequiredLength = 4;
+                // options.Password.RequireNonAlphanumeric = true;
+                // options.Password.RequireUppercase = true;
+                // options.Password.RequireLowercase = true;
 
                 // Låsningsinställningar
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
