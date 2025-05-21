@@ -41,13 +41,13 @@
         @if (Model.InStock)
         {
             <div class="alert alert-success d-inline-block">
-                <i class="bi bi-check-circle"></i> In Stock (@Model.StockQuantity available)
+                <i class="bi bi-check-circle"></i> @Model.StockQuantity I Lager
             </div>
         }
         else
         {
             <div class="alert alert-danger d-inline-block">
-                <i class="bi bi-x-circle"></i> Out of Stock
+                <i class="bi bi-x-circle"></i> Slut I Lager
             </div>
         }
 
