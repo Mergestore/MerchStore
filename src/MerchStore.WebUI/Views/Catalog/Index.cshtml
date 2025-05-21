@@ -46,6 +46,7 @@
                     }
                     <div class="card-body">
                         <h5 class="card-title">@product.Name</h5>
+                        <p class="card-text">@product.TruncatedDescription</p>
                         
                         <!-- Betyg/recensioner -->
                         <div class="star-rating">
@@ -67,19 +68,35 @@
                             <span class="review-count">@product.AverageRating.ToString("F1") från @product.ReviewCount omdömen</span>
                         </div>
                         
-                        <p class="card-text">@product.TruncatedDescription</p>
                     </div>
-                    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
-                        <span class="text-dark fw-bold">@product.FormattedPrice</span>
-                        <div>
+                    <div class="card-footer bg-white">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-dark fw-bold">@product.FormattedPrice</span>
                             @if (product.InStock)
                             {
-                                <span class="badge bg-success me-2">I Lager</span>
+                                <span class="badge bg-success">I Lager</span>
                             }
                             else
                             {
-                                <span class="badge bg-danger me-2">Slut I Lager</span>
+                                <span class="badge bg-danger">Slut I Lager</span>
                             }
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <form asp-controller="Cart" asp-action="AddToCart" method="post" class="d-flex flex-column">
+                                <input type="hidden" name="id" value="@product.Id" />
+                                <input type="hidden" name="name" value="@product.Name" />
+                                <input type="hidden" name="price" value="@product.PriceAmount" />
+                            <div class="d-flex gap-2">
+                                <div class="input-group input-group-sm" style="width: auto;">
+                                    <input type="number" id="quantity-@product.Id" name="quantity" class="form-control"
+                                           value="1" min="1" max="@product.StockQuantity" style="width: 45px; flex: none;" />
+                                    <button type="submit" class="btn btn-primary btn-sm" @(product.InStock ? "" : "disabled")>
+                                        <i class="bi bi-cart-plus"></i> Lägg till
+                                    </button>
+                                </div>
+                            </div>
+                            </form>
                             <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-outline-primary btn-sm">
                                 Se Detaljer
                             </a>
