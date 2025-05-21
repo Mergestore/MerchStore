@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MerchStore.Infrastructure.ExternalServices.Reviews.Models;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace MerchStore.Infrastructure.ExternalServices.Reviews;
 
@@ -28,6 +29,7 @@ public class ReviewApiClient
         // Konfigurera HttpClient baserat på ReviewApiOptions
         _httpClient.BaseAddress = new Uri(_options.BaseUrl);
         
+        
         // Lägg till API-nyckel i header
         _httpClient.DefaultRequestHeaders.Add(_options.ApiKeyHeaderName, _options.ApiKey);
         
@@ -38,122 +40,133 @@ public class ReviewApiClient
         _httpClient.Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds);
     }
 
-    /*// Hämtar recensioner för en produkt från API:et
-    public async Task<ReviewResponseDto?> GetProductReviewsAsync(Guid productId)
-    {
-        try
-        {
-            string url = $"products/{productId}/reviews";
-
-            _logger.LogInformation("Requesting reviews for product {ProductId} from external API", productId);
-
-            var response = await _httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode(); // Kastar exception om status är 400+
-
-            var reviewsResponse = await response.Content.ReadFromJsonAsync<ReviewResponseDto>();
-
-            _logger.LogInformation("Successfully retrieved {ReviewCount} reviews for product {ProductId}",
-                reviewsResponse?.Reviews?.Count ?? 0, productId);
-
-            // Logga JSON-respons snyggt i debug-läge
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                var json = JsonSerializer.Serialize(reviewsResponse, _prettyJsonOptions);
-                _logger.LogDebug("Received response: {Json}", json);
-            }
-
-            return reviewsResponse;
-        }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError(ex, "HTTP error occurred while fetching reviews for product {ProductId}: {Message}",
-                productId, ex.Message);
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error occurred while fetching reviews for product {ProductId}: {Message}",
-                productId, ex.Message);
-            throw;
-        }
-    }*/
-     // Hämtar recensioner för en produkt från API:et, nu med "group" parameter istället för "productId"
+    // Hämtar recensioner för en produkt från API:et, nu med "group" parameter istället för "productId"
     public async Task<ReviewResponseDto?> GetGroupReviewsAsync(Guid productId)
     {
         try
         {
-            // Konvertera GUID till en lämplig gruppbeteckning som API:et förstår
-            // Exempel: konvertera en GUID till en produktkategori eller produktnummer
-            string groupIdentifier = ConvertProductIdToGroupIdentifier(productId);
-            
-            // Bygg URL med den nya "group" query-parametern
+            // Använd alltid "group4" som grupp
+            string groupIdentifier = "group4";
             string url = $"api/v1/group-reviews?group={groupIdentifier}";
 
-            _logger.LogInformation("Requesting reviews for group {GroupId} from external API (originally product ID: {ProductId})", 
-                groupIdentifier, productId);
+            _logger.LogInformation("Requesting reviews for group {GroupId}", groupIdentifier);
 
             var response = await _httpClient.GetAsync(url);
-            
-            // Om API:et returnerar 404, kan vi hantera det särskilt
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+
+            // Hantera fel
+            if (!response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Group {GroupId} not found in external API", groupIdentifier);
-                return new ReviewResponseDto
+                _logger.LogWarning("API-anrop misslyckades: {StatusCode}", response.StatusCode);
+                return CreateEmptyResponse(productId);
+            }
+
+            // Läs svaret från API:et
+            string responseContent = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("Rådata från API: {Length} bytes", responseContent.Length);
+
+            // Tomt svar?
+            if (string.IsNullOrWhiteSpace(responseContent) || responseContent == "[]")
+            {
+                _logger.LogInformation("API returned empty array");
+                return CreateEmptyResponse(productId);
+            }
+
+            // Deserialisera till den nya modellen
+            var productReviews = await response.Content.ReadFromJsonAsync<List<ProductReviewsDto>>();
+
+            if (productReviews == null || !productReviews.Any())
+            {
+                _logger.LogWarning("API returned no product reviews");
+                return CreateEmptyResponse(productId);
+            }
+
+            // Hitta den aktuella produkten med samma ID (om den finns)
+            var productReview = productReviews.FirstOrDefault(p =>
+                p.ProductId != null && Guid.TryParse(p.ProductId, out var id) && id == productId);
+
+            // Om produkten inte hittades, returnera tomt svar
+            if (productReview == null || productReview.Reviews == null || productReview.Reviews.Reviews == null)
+            {
+                _logger.LogInformation("Product {ProductId} not found in API response", productId);
+                return CreateEmptyResponse(productId);
+            }
+
+            // Extrahera betygsdata
+            string totalReviewsStr = productReview.Reviews.TotalReviews ?? "0 st";
+            int reviewCount = int.TryParse(totalReviewsStr.Split(' ')[0], out var count) ? count : 0;
+
+            // Extrahera rating från formatterad sträng (t.ex. "★★★★½ (4.5 av 5)")
+            string formattedRating = productReview.Reviews.FormattedRating ?? "★★★☆☆ (0.0 av 5)";
+            double rating = 0.0;
+
+            // Försök hitta värdet inom parentes (t.ex. "4.5 av 5")
+            int startIndex = formattedRating.IndexOf('(');
+            int endIndex = formattedRating.IndexOf(' ', startIndex);
+            if (startIndex >= 0 && endIndex > startIndex)
+            {
+                string ratingStr = formattedRating.Substring(startIndex + 1, endIndex - startIndex - 1);
+                double.TryParse(ratingStr, System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out rating);
+            }
+
+            // Konvertera API-modellen till vår domänmodell
+            var reviewDtos = productReview.Reviews.Reviews.Select(r => new ReviewDto
+            {
+                Id = Guid.NewGuid().ToString(), // Generera ett ID eftersom det inte finns i svaret
+                GroupId = productReview.ProductId,
+                CustomerName = "Kund", // Standardvärde eftersom det inte finns i svaret
+                Title = "Recension", // Standardvärde eftersom det inte finns i svaret
+                Content = r.ReviewContent ?? "Ingen recension",
+                Rating = (int)Math.Round(rating), // Använd genomsnittsbetyget för alla recensioner
+                CreatedAt = DateTime.UtcNow.AddDays(-new Random().Next(1, 30)), // Slumpmässigt datum
+                Status = "approved"
+            }).ToList();
+
+            // Skapa och returnera vår responsmodell
+            var reviewResponse = new ReviewResponseDto
+            {
+                Reviews = reviewDtos,
+                Stats = new ReviewStatsDto
                 {
-                    Reviews = new List<ReviewDto>(),
-                    Stats = new ReviewStatsDto 
-                    { 
-                        GroupId = groupIdentifier,
-                        AverageRating = 0,
-                        ReviewCount = 0
-                    }
-                };
-            }
-            
-            // För andra fel, kasta exception
-            response.EnsureSuccessStatusCode();
+                    GroupId = productReview.ProductId,
+                    AverageRating = rating,
+                    ReviewCount = reviewCount
+                }
+            };
 
-            var reviewsResponse = await response.Content.ReadFromJsonAsync<ReviewResponseDto>();
+            _logger.LogInformation("Successfully mapped {ReviewCount} reviews for product {ProductId}",
+                reviewDtos.Count, productId);
 
-            _logger.LogInformation("Successfully retrieved {ReviewCount} reviews for group {GroupId}",
-                reviewsResponse?.Reviews?.Count ?? 0, groupIdentifier);
-
-            // Logga JSON-respons snyggt i debug-läge
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                var json = JsonSerializer.Serialize(reviewsResponse, _prettyJsonOptions);
-                _logger.LogDebug("Received response: {Json}", json);
-            }
-
-            return reviewsResponse;
-        }
-        catch (HttpRequestException ex)
-        {
-            _logger.LogError(ex, "HTTP error occurred while fetching reviews for product {ProductId}: {StatusCode} {Message}",
-                productId, ex.StatusCode, ex.Message);
-            throw;
+            return reviewResponse;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error occurred while fetching reviews for product {ProductId}: {Message}",
-                productId, ex.Message);
-            throw;
+            _logger.LogError(ex, "Error occurred while fetching reviews for product {ProductId}", productId);
+            return CreateEmptyResponse(productId);
         }
     }
+
+// Hjälpmetod för att skapa ett tomt svar
+private ReviewResponseDto CreateEmptyResponse(Guid productId)
+{
+    return new ReviewResponseDto
+    {
+        Reviews = new List<ReviewDto>(),
+        Stats = new ReviewStatsDto
+        {
+            GroupId = productId.ToString(),
+            AverageRating = 0,
+            ReviewCount = 0
+        }
+    };
+}
+
     
     // Hjälpmetod för att konvertera produkt-ID till en gruppreferens
     private string ConvertProductIdToGroupIdentifier(Guid productId)
     {
-        // När vi inte vet exakt vilka gruppvärden som API:t accepterar kan vi prova några enkla strategier
-        
-        // Strategi 1: Använd en enkel hashfunktion baserad på produktID
-        // I produktion skulle detta idealt vara en riktig mappning till godkända grupper
-        var productHash = Math.Abs(productId.GetHashCode());
-        
-        // Skapa några enkla grupper baserat på hash-värdet
-        string[] possibleGroups = { "clothing", "accessories", "equipment", "nutrition", "footwear" };
-        int groupIndex = productHash % possibleGroups.Length;
-        
-        return possibleGroups[groupIndex];
+        // Använd alltid "group4" för att hämta recensioner
+        return "group4";
+
     }
 }

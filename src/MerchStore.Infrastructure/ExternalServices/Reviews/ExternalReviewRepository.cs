@@ -1,4 +1,6 @@
 // src/MerchStore.Infrastructure/ExternalServices/Reviews/ExternalReviewRepository.cs
+
+using System.Text.Json;
 using MerchStore.Domain.Entities;
 using MerchStore.Domain.Enums;
 using MerchStore.Domain.Interfaces;
@@ -37,21 +39,19 @@ public class ExternalReviewRepository : IReviewRepository
         _circuitBreakerPolicy = Policy
             .Handle<HttpRequestException>()
             .Or<TimeoutException>()
+            .Or<JsonException>() // Lägg till JsonException explicit
             .CircuitBreakerAsync(
                 exceptionsAllowedBeforeBreaking: circuitOptions.ExceptionsAllowedBeforeBreaking,
                 durationOfBreak: TimeSpan.FromSeconds(circuitOptions.CircuitBreakerDurationSeconds),
-                onBreak: (ex, breakDuration) =>
-                {
+                onBreak: (ex, breakDuration) => {
                     _logger.LogWarning(
                         "⛔ Circuit breaker öppnade i {BreakDuration} sek pga {ExceptionType}: {ExceptionMessage}",
                         breakDuration, ex.GetType().Name, ex.Message);
                 },
-                onReset: () =>
-                {
+                onReset: () => {
                     _logger.LogInformation("✅ Circuit breaker återställd – anrop återupptas");
                 },
-                onHalfOpen: () =>
-                {
+                onHalfOpen: () => {
                     _logger.LogInformation("🤞 Circuit half-open – testar API:t");
                 });
     }
