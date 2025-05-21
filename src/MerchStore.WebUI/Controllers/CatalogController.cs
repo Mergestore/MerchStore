@@ -8,6 +8,7 @@ public class CatalogController : Controller
 {
     private readonly ICatalogService _catalogService;
     private readonly IReviewService _reviewService; // Lägg till referensen
+    private readonly ILogger<CatalogController> _logger;
 
     public CatalogController(ICatalogService catalogService, IReviewService reviewService) // Uppdatera konstruktorn
     {
@@ -16,45 +17,67 @@ public class CatalogController : Controller
     }
 
     // GET: Catalog
-    public async Task<IActionResult> Index()
+public async Task<IActionResult> Index()
+{
+    try
     {
-        try
+        // Get all products from the service
+        var products = await _catalogService.GetAllProductsAsync();
+
+        // Map domain entities to view models
+        var productViewModels = new List<ProductCardViewModel>();
+        
+        foreach (var product in products)
         {
-            // Get all products from the service
-            var products = await _catalogService.GetAllProductsAsync();
-
-            // Map domain entities to view models
-            var productViewModels = products.Select(p => new ProductCardViewModel
+            // Hämta recensionsdata för varje produkt
+            double averageRating = 0;
+            int reviewCount = 0;
+            
+            try
             {
-                Id = p.Id,
-                Name = p.Name,
-                TruncatedDescription = p.Description.Length > 100
-                    ? p.Description.Substring(0, 97) + "..."
-                    : p.Description,
-                FormattedPrice = p.Price.ToString(),
-                PriceAmount = p.Price.Amount,
-                ImageUrl = p.ImageUrl?.ToString(),
-                StockQuantity = p.StockQuantity
-            }).ToList();
-
-            // Skapa viewmodel
-            var viewModel = new ProductCatalogViewModel
+                averageRating = await _reviewService.GetAverageRatingForProductAsync(product.Id);
+                reviewCount = await _reviewService.GetReviewCountForProductAsync(product.Id);
+            }
+            catch (Exception ex)
             {
-                FeaturedProducts = productViewModels
-            };
-
-            return View(viewModel);
+                _logger.LogWarning(ex, "Kunde inte hämta recensionsdata för produkt {ProductId}", product.Id);
+                // Fortsätt med defaultvärden
+            }
+            
+            productViewModels.Add(new ProductCardViewModel
+            {
+                Id = product.Id,
+                Name = product.Name,
+                TruncatedDescription = product.Description.Length > 100
+                    ? product.Description.Substring(0, 97) + "..."
+                    : product.Description,
+                FormattedPrice = product.Price.ToString(),
+                PriceAmount = product.Price.Amount,
+                ImageUrl = product.ImageUrl?.ToString(),
+                StockQuantity = product.StockQuantity,
+                AverageRating = averageRating,
+                ReviewCount = reviewCount
+            });
         }
-        catch (Exception ex)
+
+        // Skapa viewmodel
+        var viewModel = new ProductCatalogViewModel
         {
-            // Log the exception
-            Console.WriteLine($"Error in ProductCatalog: {ex.Message}");
+            FeaturedProducts = productViewModels
+        };
 
-            // Show an error message to the user
-            ViewBag.ErrorMessage = "An error occurred while loading products. Please try again later.";
-            return View("Error");
-        }
+        return View(viewModel);
     }
+    catch (Exception ex)
+    {
+        // Log the exception
+        Console.WriteLine($"Error in ProductCatalog: {ex.Message}");
+
+        // Show an error message to the user
+        ViewBag.ErrorMessage = "An error occurred while loading products. Please try again later.";
+        return View("Error");
+    }
+}
 
     // GET: Store/Details/5
     public async Task<IActionResult> Details(Guid id)

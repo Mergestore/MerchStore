@@ -10,6 +10,16 @@
         height: 200px;
         width: 100%;
     }
+    .star-rating {
+        color: #ffc107; /* Bootstrap warning color */
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+    }
+    .review-count {
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-left: 0.25rem;
+    }
 </style>
 
 <div class="text-center">
@@ -36,6 +46,27 @@
                     }
                     <div class="card-body">
                         <h5 class="card-title">@product.Name</h5>
+                        
+                        <!-- Betyg/recensioner -->
+                        <div class="star-rating">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                if (i <= Math.Floor(product.AverageRating))
+                                {
+                                    <i class="bi bi-star-fill"></i>
+                                }
+                                else if (i <= Math.Ceiling(product.AverageRating) && i > Math.Floor(product.AverageRating))
+                                {
+                                    <i class="bi bi-star-half"></i>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-star"></i>
+                                }
+                            }
+                            <span class="review-count">@product.AverageRating.ToString("F1") från @product.ReviewCount omdömen</span>
+                        </div>
+                        
                         <p class="card-text">@product.TruncatedDescription</p>
                     </div>
                     <div class="card-footer bg-white d-flex justify-content-between align-items-center">
