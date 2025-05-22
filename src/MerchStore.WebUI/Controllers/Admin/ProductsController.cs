@@ -78,7 +78,7 @@ public class ProductsController : Controller
 
             // Hantera eventuell bilduppladdning
             string? imageUrl = null;
-            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            if (model.ImageFile is { Length: > 0 })
             {
                 // Säkerhetsvalidering av filtyp
                 var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp" };
@@ -113,7 +113,7 @@ public class ProductsController : Controller
                 _logger.LogInformation("Sparar bild till: {FilePath}", filePath);
 
                 // Spara filen
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                await using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await model.ImageFile.CopyToAsync(stream);
                 }
@@ -131,11 +131,11 @@ public class ProductsController : Controller
             }
 
             // Skapa produkt-entity
-            var product = new MerchStore.Domain.Entities.Product(
+            var product = new Domain.Entities.Product(
                 model.Name,
                 model.Description,
                 imageUri,
-                new MerchStore.Domain.ValueObjects.Money(model.Price, model.Currency),
+                new Domain.ValueObjects.Money(model.Price, model.Currency),
                 model.StockQuantity
             );
 
@@ -248,7 +248,7 @@ public class ProductsController : Controller
 
                 _logger.LogInformation("Sparar ny bild för produkt {ProductId} till: {FilePath}", id, filePath);
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                await using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await model.ImageFile.CopyToAsync(stream);
                 }
@@ -262,7 +262,7 @@ public class ProductsController : Controller
 
             // Ta bort den befintliga produkten först
             var existingProduct = await _productRepository.GetByIdAsync(id);
-            if (existingProduct != null)
+            if (existingProduct is not null)
             {
                 _logger.LogInformation("Tar bort befintlig produkt: {ProductId} - {ProductName}",
                     existingProduct.Id, existingProduct.Name);
@@ -302,17 +302,17 @@ public class ProductsController : Controller
             }
 
             // Skapa ny produkt med uppdaterade värden
-            var product = new MerchStore.Domain.Entities.Product(
+            var product = new Domain.Entities.Product(
                 model.Name,
                 model.Description,
                 imageUri,
-                new MerchStore.Domain.ValueObjects.Money(model.Price, model.Currency),
+                new Domain.ValueObjects.Money(model.Price, model.Currency),
                 model.StockQuantity
             );
 
             // Sätt ID till samma som innan för att bevara identiteten
             // Reflection krävs eftersom ID har privat setter i domänmodellen
-            var entityType = typeof(MerchStore.Domain.Common.Entity<Guid>);
+            var entityType = typeof(Domain.Common.Entity<Guid>);
             var idProperty = entityType.GetProperty("Id", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
             if (idProperty != null)
             {

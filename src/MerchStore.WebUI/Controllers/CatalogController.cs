@@ -10,10 +10,11 @@ public class CatalogController : Controller
     private readonly IReviewService _reviewService; // Lägg till referensen
     private readonly ILogger<CatalogController> _logger;
 
-    public CatalogController(ICatalogService catalogService, IReviewService reviewService) // Uppdatera konstruktorn
+    public CatalogController(ICatalogService catalogService, IReviewService reviewService, ILogger<CatalogController> logger) // Uppdatera konstruktorn
     {
         _catalogService = catalogService;
         _reviewService = reviewService; // Tilldela tjänsten
+        _logger = logger;
     }
 
     // GET: Catalog

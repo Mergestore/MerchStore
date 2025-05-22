@@ -20,10 +20,15 @@
         color: #6c757d;
         margin-left: 0.25rem;
     }
+    .star-rating {
+        font-size: 1.2rem;
+        margin-top: -3%;
+        margin-bottom: -3%
+    }
 </style>
 
 <div class="text-center">
-    <h1 class="display-4 mb-4">Product Catalog</h1>
+    <h1 class="display-4 mb-4">Product Catalog demo</h1>
     <p class="lead mb-5">Se våra produkter nedanför!</p>
 </div>
 
@@ -47,7 +52,6 @@
                     <div class="card-body">
                         <h5 class="card-title">@product.Name</h5>
                         <p class="card-text">@product.TruncatedDescription</p>
-                        
                         <!-- Betyg/recensioner -->
                         <div class="star-rating">
                             @for (int i = 1; i <= 5; i++)
@@ -92,7 +96,7 @@
                                     <input type="number" id="quantity-@product.Id" name="quantity" class="form-control"
                                            value="1" min="1" max="@product.StockQuantity" style="width: 45px; flex: none;" />
                                     <button type="submit" class="btn btn-primary btn-sm" @(product.InStock ? "" : "disabled")>
-                                        <i class="bi bi-cart-plus"></i> Lägg till
+                                        Lägg till <i class="bi bi-cart-plus"></i>
                                     </button>
                                 </div>
                             </div>

@@ -23,7 +23,7 @@ public class AccountController : Controller
     }
 
     [HttpGet]
-    public IActionResult Login(string returnUrl = null)
+    public IActionResult Login(string? returnUrl = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
         return View();
@@ -31,7 +31,7 @@ public class AccountController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(LoginViewModel model, string returnUrl = null)
+    public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
 
@@ -82,7 +82,7 @@ public class AccountController : Controller
     }
 
     [HttpGet]
-    public IActionResult Register(string returnUrl = null)
+    public IActionResult Register(string? returnUrl = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
         return View();
@@ -90,7 +90,7 @@ public class AccountController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Register(RegisterViewModel model, string returnUrl = null)
+    public async Task<IActionResult> Register(RegisterViewModel model, string? returnUrl = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
 
@@ -128,7 +128,7 @@ public class AccountController : Controller
         return View(model);
     }
 
-    private IActionResult RedirectToLocal(string returnUrl)
+    private IActionResult RedirectToLocal(string? returnUrl)
     {
         if (Url.IsLocalUrl(returnUrl))
         {
@@ -146,24 +146,27 @@ public class AccountController : Controller
     [HttpGet]
     public async Task<IActionResult> AddAdminRole()
     {
-        if (!User.Identity.IsAuthenticated)
+        if (User.Identity != null && !User.Identity.IsAuthenticated)
         {
             return RedirectToAction("Login");
         }
 
-        var user = await _userManager.FindByNameAsync(User.Identity.Name);
-        if (user != null)
+        if (User.Identity?.Name != null)
         {
-            // Kontrollera om användaren redan har rollen
-            if (!await _userManager.IsInRoleAsync(user, MerchStore.Domain.Constants.UserRoles.Administrator))
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            if (user != null)
             {
-                // Lägg till Admin-rollen
-                await _userManager.AddToRoleAsync(user, MerchStore.Domain.Constants.UserRoles.Administrator);
-                TempData["SuccessMessage"] = "Admin-rollen har lagts till till din användare. Logga ut och in igen för att aktivera den.";
-            }
-            else
-            {
-                TempData["SuccessMessage"] = "Du har redan Admin-rollen.";
+                // Kontrollera om användaren redan har rollen
+                if (!await _userManager.IsInRoleAsync(user, Domain.Constants.UserRoles.Administrator))
+                {
+                    // Lägg till Admin-rollen
+                    await _userManager.AddToRoleAsync(user, Domain.Constants.UserRoles.Administrator);
+                    TempData["SuccessMessage"] = "Admin-rollen har lagts till till din användare. Logga ut och in igen för att aktivera den.";
+                }
+                else
+                {
+                    TempData["SuccessMessage"] = "Du har redan Admin-rollen.";
+                }
             }
         }
 
