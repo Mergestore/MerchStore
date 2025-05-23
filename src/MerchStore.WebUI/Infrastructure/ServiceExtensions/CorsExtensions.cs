@@ -19,7 +19,7 @@ public static class CorsExtensions
             options.AddPolicy("AllowAllOrigins",
                 builder =>
                 {
-                    builder.AllowAnyOrigin()  // Vem som helst får anropa (⚠️ i produktion: begränsa!)
+                    builder.AllowAnyOrigin()  // Vem som helst får anropa (i produktion: begränsa!)
                         .AllowAnyHeader()     // Tillåt alla typer av headers
                         .AllowAnyMethod();    // Tillåt GET, POST, PUT, DELETE etc
                 });

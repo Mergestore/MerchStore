@@ -11,12 +11,26 @@ using MerchStore.WebUI.Infrastructure;
 using System.Text.Json.Serialization;
 using MerchStore.Infrastructure.Models.Auth;
 using MerchStore.WebUI.Models;
-using MerchStore.WebUI.Models.Auth; // För Json-konvertering
+using MerchStore.WebUI.Models.Auth;
 using Microsoft.AspNetCore.Identity;
 using MerchStore.WebUI.Infrastructure.ServiceExtensions;
+using Azure.Identity;
 
 /// <summary>
 /// MerchStore Application - Startpunkt och konfigurera ASP.NET Core-applikation
+/// 
+/// UPPDATERAD MED KEY VAULT INTEGRATION
+/// ===================================
+/// Nu använder applikationen Azure Key Vault för att hantera känsliga konfigurationsvärden
+/// som connection strings, API-nycklar och lösenord. Detta ökar säkerheten betydligt
+/// jämfört med att lagra hemliga värden i konfigurationsfiler.
+/// 
+/// Key Vault Integration:
+/// ----------------------
+/// * DefaultAzureCredential: Automatisk autentisering som fungerar både lokalt och i Azure
+/// * Lokalt: Använder Azure CLI credentials eller Visual Studio credentials
+/// * Azure: Använder Managed Identity för säker åtkomst utan lösenord
+/// * Konfigurationsvärden hämtas transparent från Key Vault vid runtime
 /// 
 /// Applikationsarkitektur:
 /// -----------------------
@@ -51,14 +65,32 @@ using MerchStore.WebUI.Infrastructure.ServiceExtensions;
 ///
 /// Applikationsflöde:
 /// -----------------
-/// 1. Konfigurering av tjänster (AddAuthenticationServices, AddSessionServices, etc.)
-/// 2. Databasinitiering och seedning
-/// 3. Konfigurering av HTTP-pipeline med middleware
-/// 4. Routing och körning av applikationen
+/// 1. Key Vault-konfiguration läses in först
+/// 2. Konfigurering av tjänster (AddAuthenticationServices, AddSessionServices, etc.)
+/// 3. Databasinitiering och seedning
+/// 4. Konfigurering av HTTP-pipeline med middleware
+/// 5. Routing och körning av applikationen
 /// </summary>
 
 // Skapa en WebApplicationBuilder som är startpunkten för att konfigurera applikationen
 var builder = WebApplication.CreateBuilder(args);
+
+// Key vault URI hämtas från konfigurationen
+var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+
+if (!string.IsNullOrEmpty(keyVaultUri))
+{
+    builder.Configuration.AddAzureKeyVault(
+        new Uri(keyVaultUri),
+        new DefaultAzureCredential());
+        
+    // Logga att Key Vault används (men visa inte känslig information)
+    Console.WriteLine($"🔐 Key Vault konfigurerad: {keyVaultUri}");
+}
+else
+{
+    Console.WriteLine("WARNING: Key Vault URI inte konfigurerad - använder lokala konfigurationsfiler");
+}
 
 // Lägger till services/tjänster från src/MerchStore.WebUI/Infrastructure/ServiceExtensions
 
@@ -83,9 +115,23 @@ builder.Services.AddApplication();
 // Lägg till infrastrukturlagrets tjänster (databas, repositories, etc.)
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Logga anslutningssträngen
+// Logga anslutningssträngen (men bara längden av säkerhetsskäl)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-Console.WriteLine($"Använder anslutningssträng: {connectionString}");
+Console.WriteLine($"📊 Använder anslutningssträng med längd: {connectionString?.Length ?? 0} tecken");
+
+// 🔍 Diagnostik för Key Vault (endast i utvecklingsmiljö)
+if (builder.Environment.IsDevelopment())
+{
+    // Testa att några viktiga konfigurationsvärden finns
+    var hasConnectionString = !string.IsNullOrEmpty(builder.Configuration.GetConnectionString("DefaultConnection"));
+    var hasApiKey = !string.IsNullOrEmpty(builder.Configuration["ApiKey:Value"]);
+    var hasReviewApiKey = !string.IsNullOrEmpty(builder.Configuration["ReviewApi:ApiKey"]);
+    
+    Console.WriteLine($"🔧 Utvecklingsdiagnostik:");
+    Console.WriteLine($"   - Connection String: {(hasConnectionString ? "Finns" : "Saknas")}");
+    Console.WriteLine($"   - API Key: {(hasApiKey ? "Finns" : "Saknas")}");
+    Console.WriteLine($"   - Review API Key: {(hasReviewApiKey ? "Finns" : "Saknas")}");
+}
 
 // Bygg applikationen med alla konfigurerade tjänster
 var app = builder.Build();

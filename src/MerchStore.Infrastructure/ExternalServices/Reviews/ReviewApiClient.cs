@@ -28,14 +28,14 @@ public class ReviewApiClient
 
         // Konfigurera HttpClient baserat på ReviewApiOptions
         _httpClient.BaseAddress = new Uri(_options.BaseUrl);
-        
-        
+
+
         // Lägg till API-nyckel i header
         _httpClient.DefaultRequestHeaders.Add(_options.ApiKeyHeaderName, _options.ApiKey);
-        
+
         // Lägg även till Bearer token om det behövs
         _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_options.ApiKey}");
-        
+
         // Sätt timeout
         _httpClient.Timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds);
     }
@@ -147,26 +147,18 @@ public class ReviewApiClient
     }
 
 // Hjälpmetod för att skapa ett tomt svar
-private ReviewResponseDto CreateEmptyResponse(Guid productId)
-{
-    return new ReviewResponseDto
+    private ReviewResponseDto CreateEmptyResponse(Guid productId)
     {
-        Reviews = new List<ReviewDto>(),
-        Stats = new ReviewStatsDto
+        return new ReviewResponseDto
         {
-            GroupId = productId.ToString(),
-            AverageRating = 0,
-            ReviewCount = 0
-        }
-    };
-}
-
-    
-    // Hjälpmetod för att konvertera produkt-ID till en gruppreferens
-    private string ConvertProductIdToGroupIdentifier(Guid productId)
-    {
-        // Använd alltid "group4" för att hämta recensioner
-        return "group4";
+            Reviews = new List<ReviewDto>(),
+            Stats = new ReviewStatsDto
+            {
+                GroupId = productId.ToString(),
+                AverageRating = 0,
+                ReviewCount = 0
+            }
+        };
 
     }
 }

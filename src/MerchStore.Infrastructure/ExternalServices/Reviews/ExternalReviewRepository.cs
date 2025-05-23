@@ -35,7 +35,7 @@ public class ExternalReviewRepository : IReviewRepository
 
         var circuitOptions = options.Value;
 
-        // 🛡️ Setup Polly Circuit Breaker: Stoppa anrop efter X misslyckanden
+        //  Setup Polly Circuit Breaker: Stoppa anrop efter X misslyckanden
         _circuitBreakerPolicy = Policy
             .Handle<HttpRequestException>()
             .Or<TimeoutException>()
@@ -45,14 +45,14 @@ public class ExternalReviewRepository : IReviewRepository
                 durationOfBreak: TimeSpan.FromSeconds(circuitOptions.CircuitBreakerDurationSeconds),
                 onBreak: (ex, breakDuration) => {
                     _logger.LogWarning(
-                        "⛔ Circuit breaker öppnade i {BreakDuration} sek pga {ExceptionType}: {ExceptionMessage}",
+                        "Circuit breaker öppnade i {BreakDuration} sek pga {ExceptionType}: {ExceptionMessage}",
                         breakDuration, ex.GetType().Name, ex.Message);
                 },
                 onReset: () => {
-                    _logger.LogInformation("✅ Circuit breaker återställd – anrop återupptas");
+                    _logger.LogInformation("Circuit breaker återställd – anrop återupptas");
                 },
                 onHalfOpen: () => {
-                    _logger.LogInformation("🤞 Circuit half-open – testar API:t");
+                    _logger.LogInformation("Circuit half-open – testar API:t");
                 });
     }
 
@@ -60,7 +60,7 @@ public class ExternalReviewRepository : IReviewRepository
     {
         try
         {
-            // 🧠 Kör anropet genom circuit breaker-skyddet
+            // Kör anropet genom circuit breaker-skyddet
             return await _circuitBreakerPolicy.ExecuteAsync(async () =>
             {
                 // Anropa den nya metoden för grupprecensioner
@@ -72,7 +72,7 @@ public class ExternalReviewRepository : IReviewRepository
                     throw new InvalidOperationException("External API returned incomplete data");
                 }
 
-                // Mappa från DTO till riktiga domänobjekt
+                // Mappa från DTO till domänobjekt
                 var reviews = response.Reviews.Select(r => new Review(
                     Guid.Parse(r.Id ?? Guid.NewGuid().ToString()),
                     productId, // Vi använder det ursprungliga produkt-ID:t här, inte grupp-ID:t
@@ -96,17 +96,17 @@ public class ExternalReviewRepository : IReviewRepository
         catch (BrokenCircuitException)
         {
             // 🚨 Om kretsen är öppen → använd fallback/mock
-            _logger.LogWarning("⚠️ Circuit är öppen – använder mock data för produkt {ProductId}", productId);
+            _logger.LogWarning("Circuit är öppen – använder mock data för produkt {ProductId}", productId);
             return _mockReviewService.GetProductReviews(productId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Fel vid hämtning av recensioner för produkt {ProductId} – använder mock", productId);
+            _logger.LogError(ex, "Fel vid hämtning av recensioner för produkt {ProductId} – använder mock", productId);
             return _mockReviewService.GetProductReviews(productId);
         }
     }
 
-    // 🔁 Översätt textstatus till enum
+    // Översätt textstatus till enum
     private static ReviewStatus ParseReviewStatus(string? status)
     {
         return status?.ToLowerInvariant() switch
