@@ -2,7 +2,38 @@
 1 .
 
 
-2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 az keyvault secret list --vault-name merchstore-keyvault --output table
 
 Name                                  Id                                                                                        ContentType    Enabled    Expires
